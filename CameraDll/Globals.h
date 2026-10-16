@@ -62,6 +62,7 @@ namespace IGCS
 			_cameraMovementLocked = !_cameraMovementLocked;
 			return _cameraMovementLocked;
 		}
+		bool hudVisible() const { return _hudVisible; }
 		bool toggleHudVisible()
 		{
 			_hudVisible = !_hudVisible;

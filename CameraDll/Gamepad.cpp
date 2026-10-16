@@ -7,6 +7,7 @@
 #include <Xinput.h>
 #include <algorithm>
 #include <limits>
+#include <cmath>
 
 #define clamp(v, _min, _max) max(min(v, _max), _min)
 
@@ -19,9 +20,22 @@ bool Gamepad::isButtonPressed(button_t b) { return (buttonState & b); }
 void Gamepad::setInvertLStickY(bool b) { invertLSY = b; }
 void Gamepad::setInvertRStickY(bool b) { invertRSY = b; }
 
+// Read through the game's own xinput1_4: Steam Input hooks the XInput DLLs that are loaded when the game starts, so its virtual pad
+// (PlayStation pads etc.) doesn't show up through the xinput9_1_0 we link against, which only loads when we're injected.
+typedef DWORD(WINAPI* XINPUTGETSTATE)(DWORD, XINPUT_STATE*);
+static XINPUTGETSTATE resolveXInputGetState() {
+	HMODULE xinput = GetModuleHandleW(L"xinput1_4.dll");
+	XINPUTGETSTATE fn = xinput ? reinterpret_cast<XINPUTGETSTATE>(GetProcAddress(xinput, "XInputGetState")) : nullptr;
+	return fn ? fn : &XInputGetState;
+}
+
 void Gamepad::update() {
+	static const XINPUTGETSTATE getState = resolveXInputGetState();
 	ZeroMemory(&gpState, sizeof(XINPUT_STATE));
-	connected = (XInputGetState(gpIndex, &gpState) == ERROR_SUCCESS);
+	connected = (getState(gpIndex, &gpState) == ERROR_SUCCESS);
+	if (!connected) {
+		gpIndex = (gpIndex + 1) % XUSER_MAX_COUNT;		// Steam's virtual pad isn't always slot 0: try the next slot on the next update
+	}
 	if (buttonState != gpState.Gamepad.wButtons) {
 		WORD stateDiff = buttonState ^ gpState.Gamepad.wButtons;
 		WORD buttonStateCopy = buttonState;
@@ -45,30 +59,25 @@ void Gamepad::update() {
 	buttonState = gpState.Gamepad.wButtons;
 }
 
-vec2 Gamepad::getLStickPosition() {
-	auto x = gpState.Gamepad.sThumbLX;
-	auto y = gpState.Gamepad.sThumbLY;
-	if (abs(x) <= XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE &&
-		abs(y) <= XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE ) {
+// Radial deadzone rescaled to 0..1, then a squared response curve: precise near the center, full speed at the edge (like most games).
+static vec2 shapeStick(SHORT rawX, SHORT rawY, bool invertY, float deadzone) {
+	float x = static_cast<float>(rawX) / static_cast<float>(SHRT_MAX);
+	float y = (invertY ? -1.0f : 1.0f) * static_cast<float>(rawY) / static_cast<float>(SHRT_MAX);
+	float length = sqrtf(x * x + y * y);
+	if (length <= deadzone) {
 		return { 0.0f, 0.0f };
-	} else {
-		auto xf = float{ static_cast<float>(x) / static_cast<float>(SHRT_MAX) };
-		auto yf = float{ (invertLSY ? -1.0f : 1.0f) * static_cast<float>(y) / static_cast<float>(SHRT_MAX) };
-		return { clamp(xf, -1.0f, 1.0f), clamp(yf, -1.0f, 1.0f) };
-	};
+	}
+	float scaled = (std::min)((length - deadzone) / (1.0f - deadzone), 1.0f);
+	float factor = scaled * scaled / length;
+	return { x * factor, y * factor };
+}
+
+vec2 Gamepad::getLStickPosition() {
+	return shapeStick(gpState.Gamepad.sThumbLX, gpState.Gamepad.sThumbLY, invertLSY, static_cast<float>(XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE) / SHRT_MAX);
 }
 
 vec2 Gamepad::getRStickPosition() {
-	auto x = gpState.Gamepad.sThumbRX;
-	auto y = gpState.Gamepad.sThumbRY;
-	if (abs(x) <= XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE &&
-		abs(y) <= XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE ) {
-		return { 0.0f, 0.0f };
-	} else {
-		auto xf = float{ static_cast<float>(x) / static_cast<float>(SHRT_MAX) };
-		auto yf = float{ (invertRSY ? -1.0f : 1.0f) * static_cast<float>(y) / static_cast<float>(SHRT_MAX) };
-		return { clamp(xf, -1.0f, 1.0f), clamp(yf, -1.0f, 1.0f) };
-	};
+	return shapeStick(gpState.Gamepad.sThumbRX, gpState.Gamepad.sThumbRY, invertRSY, static_cast<float>(XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE) / SHRT_MAX);
 }
 
 float Gamepad::getLTrigger() {

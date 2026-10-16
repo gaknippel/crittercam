@@ -120,8 +120,10 @@ namespace IGCS
 	{
 		// positive amount = look up. A positive pitch angle looks down in this convention, hence the minus.
 		float lookDirectionInverter = Globals::instance().settings().invertY ? -1.0f : 1.0f;
-		_pitch -= (Globals::instance().settings().rotationSpeed * amount * lookDirectionInverter);
-		_pitch = clampAngle(_pitch);
+		// stop just short of straight up/down like a game camera, instead of flipping over the top.
+		float signedPitch = _pitch > XM_PI ? _pitch - XM_2PI : _pitch;
+		signedPitch -= (Globals::instance().settings().rotationSpeed * amount * lookDirectionInverter);
+		_pitch = clampAngle(std::clamp(signedPitch, -PITCH_LIMIT, PITCH_LIMIT));
 	}
 
 

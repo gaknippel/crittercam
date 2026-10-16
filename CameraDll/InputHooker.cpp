@@ -31,6 +31,12 @@
 #include "Globals.h"
 #include "input.h"
 #include "MessageHandler.h"
+#include "GameConstants.h"
+#include <algorithm>
+#include <cmath>
+
+extern "C" LPBYTE g_cameraOverrideBuffer;
+extern "C" LPBYTE g_gameSourceCamera;
 
 using namespace std;
 
@@ -77,6 +83,31 @@ namespace IGCS::InputHooker
 	}
 
 
+	// Horizontal look direction (yaw) of a camera struct. forward - forward.y * up stays valid when looking straight up or down.
+	static float cameraYaw(LPBYTE camera)
+	{
+		const float* up = reinterpret_cast<const float*>(camera + CAMERA_MATRIX_IN_STRUCT_OFFSET + 0x10);
+		const float* forward = reinterpret_cast<const float*>(camera + CAMERA_MATRIX_IN_STRUCT_OFFSET + 0x20);
+		return atan2f(forward[0] - forward[1] * up[0], forward[2] - forward[1] * up[2]);
+	}
+
+
+	// The game moves the character relative to ITS camera, but you're looking through ours: turn the move stick by the yaw difference.
+	static void rotateMoveStickToFreeCam(XINPUT_GAMEPAD& pad)
+	{
+		LPBYTE gameCamera = g_gameSourceCamera;
+		if (nullptr == gameCamera)
+		{
+			return;
+		}
+		const float delta = cameraYaw(g_cameraOverrideBuffer) - cameraYaw(gameCamera);
+		const float c = cosf(delta), s = sinf(delta);
+		const float x = pad.sThumbLX, y = pad.sThumbLY;
+		pad.sThumbLX = static_cast<SHORT>(std::clamp(x * c + y * s, -32768.0f, 32767.0f));
+		pad.sThumbLY = static_cast<SHORT>(std::clamp(y * c - x * s, -32768.0f, 32767.0f));
+	}
+
+
 	// Our own version of XInputGetState
 	DWORD WINAPI detourXInputGetState(DWORD dwUserIndex, XINPUT_STATE* pState)
 	{
@@ -89,6 +120,10 @@ namespace IGCS::InputHooker
 			if (Globals::instance().inputBlocked() && Globals::instance().controllerControlsCamera())
 			{
 				ZeroMemory(pState, sizeof(XINPUT_STATE));
+			}
+			else if (ERROR_SUCCESS == toReturn)
+			{
+				rotateMoveStickToFreeCam(pState->Gamepad);
 			}
 		}
 		return toReturn;
@@ -167,7 +202,9 @@ namespace IGCS::InputHooker
 		{
 			return;
 		}
-		if (MH_CreateHookApiEx(L"XINPUT1_3", "XInputGetState", &detourXInputGetState, &hookedXInputGetState) != MH_OK)
+		// Nightreign imports XINPUT1_4 (by ordinal, which still lands on this export); 1_3 is the fallback for other setups.
+		if (MH_CreateHookApiEx(L"XINPUT1_4", "XInputGetState", &detourXInputGetState, &hookedXInputGetState) != MH_OK
+			&& MH_CreateHookApiEx(L"XINPUT1_3", "XInputGetState", &detourXInputGetState, &hookedXInputGetState) != MH_OK)
 		{
 			MessageHandler::logError("Hooking XINPUT failed! Try re-enabling the hook with the button on the General tab after you've used the controller in-game.");
 		}

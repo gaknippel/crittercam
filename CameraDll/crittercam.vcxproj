@@ -119,6 +119,7 @@ copy /y "$(TargetPath)" "$(SolutionDir)IGCSClient\bin\$(Configuration)\"</Comman
     <ClInclude Include="InterceptorHelper.h" />
     <ClInclude Include="MessageHandler.h" />
     <ClInclude Include="NamedPipeManager.h" />
+    <ClInclude Include="PathOverlay.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="System.h" />
@@ -143,6 +144,7 @@ copy /y "$(TargetPath)" "$(SolutionDir)IGCSClient\bin\$(Configuration)\"</Comman
     </ClCompile>
     <ClCompile Include="MessageHandler.cpp" />
     <ClCompile Include="NamedPipeManager.cpp" />
+    <ClCompile Include="PathOverlay.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>
     </ClCompile>

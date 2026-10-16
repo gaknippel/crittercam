@@ -164,4 +164,42 @@ namespace IGCS
 		fov = std::clamp(XMVectorGetX(f), FOV_MIN, FOV_MAX);
 		return stillPlaying;
 	}
+
+
+	void CameraPath::sampleForDisplay(std::vector<XMFLOAT3>& curve, std::vector<XMFLOAT3>& nodes, std::vector<XMFLOAT3>& aims) const
+	{
+		const int SAMPLES_PER_SEGMENT = 24;
+		const float AIM_LENGTH = 1.0f;		// meters
+		curve.clear();
+		nodes.clear();
+		aims.clear();
+		const int count = static_cast<int>(_nodes.size());
+		const bool loop = Globals::instance().settings().dollyLoop;
+		const int segmentCount = count < 2 ? 0 : (loop ? count : count - 1);
+		for (int segment = 0; segment < segmentCount; segment++)
+		{
+			const XMVECTOR p0 = XMLoadFloat3(&nodeAt(segment - 1, loop).position);
+			const XMVECTOR p1 = XMLoadFloat3(&nodeAt(segment, loop).position);
+			const XMVECTOR p2 = XMLoadFloat3(&nodeAt(segment + 1, loop).position);
+			const XMVECTOR p3 = XMLoadFloat3(&nodeAt(segment + 2, loop).position);
+			for (int i = 0; i < SAMPLES_PER_SEGMENT; i++)
+			{
+				XMFLOAT3 point;
+				XMStoreFloat3(&point, XMVectorCatmullRom(p0, p1, p2, p3, static_cast<float>(i) / SAMPLES_PER_SEGMENT));
+				curve.push_back(point);
+			}
+		}
+		if (segmentCount > 0)
+		{
+			curve.push_back(nodeAt(segmentCount, loop).position);
+		}
+		for (const Node& node : _nodes)
+		{
+			nodes.push_back(node.position);
+			XMFLOAT3 aim;
+			XMVECTOR forward = XMVector3Rotate(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), XMLoadFloat4(&node.rotation));
+			XMStoreFloat3(&aim, XMVectorAdd(XMLoadFloat3(&node.position), XMVectorScale(forward, AIM_LENGTH)));
+			aims.push_back(aim);
+		}
+	}
 }

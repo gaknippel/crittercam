@@ -22,6 +22,7 @@ EXTERN g_cameraStructAddress: qword
 EXTERN g_activeCameraStructAddress: qword
 EXTERN g_cameraOverrideBuffer: qword
 EXTERN g_cameraCandidates: qword
+EXTERN g_gameSourceCamera: qword
 ;---------------------------------------------------------------
 
 ;---------------------------------------------------------------
@@ -66,6 +67,7 @@ cameraStructInterceptor PROC
 	mov dword ptr [r10+58h], eax
 	mov eax, dword ptr [rcx+5Ch]			; far plane
 	mov dword ptr [r10+5Ch], eax
+	mov qword ptr [g_gameSourceCamera], rcx	; remember the game's camera: the controller hook turns the move stick relative to it
 	mov rcx, r10							; copy from our camera from here on.
 	jmp originalCode
 recordCandidate:

@@ -16,6 +16,7 @@
 #include "MinHook.h"
 #include "NamedPipeManager.h"
 #include "MessageHandler.h"
+#include "PathOverlay.h"
 #include <timeapi.h>
 #include <algorithm>
 
@@ -59,7 +60,7 @@ namespace IGCS
 	{
 		while (Globals::instance().systemActive())
 		{
-			Sleep(_cameraPath.isPlaying() ? FRAME_SLEEP_DOLLY : FRAME_SLEEP);
+			Sleep(FRAME_SLEEP);
 			updateFrame();
 		}
 	}
@@ -89,6 +90,14 @@ namespace IGCS
 		{
 			CameraManipulator::reassertTimeStop();
 		}
+		// path overlay: while flying the free cam, hidden during playback and with the HUD (so one key gives a clean frame).
+		const bool showPath = g_cameraEnabled && !_cameraPath.isPlaying() && _cameraPath.nodeCount() > 0 && Globals::instance().hudVisible();
+		if (showPath)
+		{
+			_cameraPath.sampleForDisplay(_pathCurve, _pathNodes, _pathAims);
+			PathOverlay::update(_pathCurve, _pathNodes, _pathAims);
+		}
+		PathOverlay::setVisible(showPath);
 	}
 
 
@@ -107,6 +116,10 @@ namespace IGCS
 
 	void System::handleUserInput()
 	{
+		// held keys / sticks move by elapsed time, so the speed doesn't depend on how often this loop runs. Clamped so a stall doesn't teleport the camera.
+		auto now = std::chrono::steady_clock::now();
+		float frameScale = (std::min)(std::chrono::duration<float>(now - _lastInputTime).count() / SPEED_REFERENCE_SECONDS, 10.0f);
+		_lastInputTime = now;
 		if(!checkIfGamehasFocus())
 		{
 			// our window isn't focused, exit
@@ -176,11 +189,11 @@ namespace IGCS
 		}
 		if (Input::isActionActivated(ActionType::FovDecrease) && Globals::instance().keyboardMouseControlCamera())
 		{
-			_camera.changeFoV(-Globals::instance().settings().fovChangeSpeed * FOV_CHANGE_SCALE);
+			_camera.changeFoV(-Globals::instance().settings().fovChangeSpeed * FOV_CHANGE_SCALE * frameScale);
 		}
 		if (Input::isActionActivated(ActionType::FovIncrease) && Globals::instance().keyboardMouseControlCamera())
 		{
-			_camera.changeFoV(Globals::instance().settings().fovChangeSpeed * FOV_CHANGE_SCALE);
+			_camera.changeFoV(Globals::instance().settings().fovChangeSpeed * FOV_CHANGE_SCALE * frameScale);
 		}
 		_camera.resetMovement();
 		Settings& settings = Globals::instance().settings();
@@ -198,9 +211,9 @@ namespace IGCS
 		float multiplier = Utils::altPressed() ? settings.fastMovementMultiplier : Utils::ctrlPressed() ? settings.slowMovementMultiplier : 1.0f;
 		// Zoomed in = move slower, so it stays controllable. Relative to the fov the game had when the camera was enabled.
 		multiplier *= std::clamp(fabsf(_camera.getFoV()) / _camera.getOriginalFoV(), 0.01f, 1.0f);
-		handleKeyboardCameraMovement(multiplier);
-		handleMouseCameraMovement(multiplier);
-		handleGamePadMovement(multiplier);
+		handleKeyboardCameraMovement(multiplier * frameScale);
+		handleMouseCameraMovement(multiplier);		// mouse deltas are already per-update distances, no time scaling
+		handleGamePadMovement(multiplier, frameScale);
 	}
 
 
@@ -275,7 +288,7 @@ namespace IGCS
 	}
 
 
-	void System::handleGamePadMovement(float multiplierBase)
+	void System::handleGamePadMovement(float multiplierBase, float frameScale)
 	{
 		if(!Globals::instance().controllerControlsCamera())
 		{
@@ -283,12 +296,20 @@ namespace IGCS
 		}
 
 		auto gamePad = Globals::instance().gamePad();
+		static bool missingPadReported = false;
+		if (!gamePad.isConnected() && !missingPadReported)
+		{
+			// we read the pad through XInput: PlayStation/Switch pads only show up via Steam Input or DS4Windows.
+			MessageHandler::addNotification("No XInput controller found. PlayStation pad? Enable Steam Input or use DS4Windows.");
+			missingPadReported = true;
+		}
 
 		if (gamePad.isConnected())
 		{
 			Settings& settings = Globals::instance().settings();
 			float  multiplier = gamePad.isButtonPressed(IGCS_BUTTON_FASTER) ? settings.fastMovementMultiplier
 																			: gamePad.isButtonPressed(IGCS_BUTTON_SLOWER) ? settings.slowMovementMultiplier : multiplierBase;
+			multiplier *= frameScale;
 			vec2 rightStickPosition = gamePad.getRStickPosition();
 			_camera.pitch(rightStickPosition.y * multiplier);
 			_camera.yaw(rightStickPosition.x * multiplier);
@@ -312,11 +333,11 @@ namespace IGCS
 			}
 			if (gamePad.isButtonPressed(IGCS_BUTTON_FOV_DECREASE))
 			{
-				_camera.changeFoV(-Globals::instance().settings().fovChangeSpeed * FOV_CHANGE_SCALE);
+				_camera.changeFoV(-Globals::instance().settings().fovChangeSpeed * FOV_CHANGE_SCALE * frameScale);
 			}
 			if (gamePad.isButtonPressed(IGCS_BUTTON_FOV_INCREASE))
 			{
-				_camera.changeFoV(Globals::instance().settings().fovChangeSpeed * FOV_CHANGE_SCALE);
+				_camera.changeFoV(Globals::instance().settings().fovChangeSpeed * FOV_CHANGE_SCALE * frameScale);
 			}
 		}
 	}
@@ -333,7 +354,7 @@ namespace IGCS
 		bool leftButtonPressed = Input::isMouseButtonDown(0);
 		bool rightButtonPressed = Input::isMouseButtonDown(1);
 		bool noButtonPressed = !(leftButtonPressed || rightButtonPressed);
-		if (abs(mouseDeltaY) > 1)
+		if (mouseDeltaY != 0)
 		{
 			float yValue = (static_cast<float>(mouseDeltaY)* MOUSE_SPEED_CORRECTION* multiplier);
 			if (noButtonPressed)
@@ -354,7 +375,7 @@ namespace IGCS
 				}
 			}
 		}
-		if (abs(mouseDeltaX) > 1)
+		if (mouseDeltaX != 0)
 		{
 			float xValue = static_cast<float>(mouseDeltaX)* MOUSE_SPEED_CORRECTION* multiplier;
 			if (noButtonPressed)
@@ -450,6 +471,7 @@ namespace IGCS
 		NamedPipeManager::instance().connectDllToClient();
 		NamedPipeManager::instance().startListening();
 		InputHooker::setInputHooks();
+		PathOverlay::start();
 		Input::registerRawInput();
 
 		GameSpecific::InterceptorHelper::initializeAOBBlocks(_hostImageAddress, _hostImageSize, _aobBlocks);

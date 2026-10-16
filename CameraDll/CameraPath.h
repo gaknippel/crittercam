@@ -26,6 +26,8 @@ namespace IGCS
 		// Calculates the camera pose for the current time. Returns false when (non-looping) playback just finished,
 		// in which case the pose of the last node is returned.
 		bool evaluate(DirectX::XMFLOAT3& position, DirectX::XMVECTOR& rotationQuaternion, float& fov);
+		// Points to draw the path with: the curve evaluate() follows, the nodes, and per node a point along its view direction.
+		void sampleForDisplay(std::vector<DirectX::XMFLOAT3>& curve, std::vector<DirectX::XMFLOAT3>& nodes, std::vector<DirectX::XMFLOAT3>& aims) const;
 
 	private:
 		struct Node

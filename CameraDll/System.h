@@ -10,6 +10,7 @@
 #include "InputHooker.h"
 #include "Gamepad.h"
 #include <map>
+#include <chrono>
 #include "AOBBlock.h"
 
 namespace IGCS
@@ -33,7 +34,7 @@ namespace IGCS
 		void toggleCameraMovementLockState();
 		void handleKeyboardCameraMovement(float multiplier);
 		void handleMouseCameraMovement(float multiplier);
-		void handleGamePadMovement(float multiplierBase);
+		void handleGamePadMovement(float multiplierBase, float frameScale);
 		void waitForCameraStructAddresses();
 		void toggleInputBlockState();
 		void toggleHud();
@@ -47,6 +48,8 @@ namespace IGCS
 		DWORD _hostImageSize;
 		bool _cameraStructFound = false;
 		map<string, AOBBlock*> _aobBlocks;
+		std::vector<DirectX::XMFLOAT3> _pathCurve, _pathNodes, _pathAims;	// reused buffers for the path overlay
+		std::chrono::steady_clock::time_point _lastInputTime = std::chrono::steady_clock::now();
 		ULONGLONG _ignoreKeysUntil = 0;		// key repeat prevention without blocking the loop (a blocking sleep would stutter dolly playback)
 		std::filesystem::path _hostExePath;
 		std::filesystem::path _hostExeFilename;

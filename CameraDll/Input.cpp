@@ -120,8 +120,9 @@ namespace IGCS::Input
 	{
 		if (MOUSE_MOVE_RELATIVE == rmouse->usFlags)
 		{
-			_deltaMouseX = rmouse->lLastX;
-			_deltaMouseY = rmouse->lLastY;
+			// accumulate: a 1000Hz mouse sends several packets per camera update, keeping only the last one loses most of the motion.
+			_deltaMouseX += rmouse->lLastX;
+			_deltaMouseY += rmouse->lLastY;
 		}
 	}
 

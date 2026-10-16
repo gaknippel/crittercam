@@ -33,33 +33,33 @@
 namespace IGCS
 {
 	// System defaults
-	#define FRAME_SLEEP								8		// in milliseconds
-	#define FRAME_SLEEP_DOLLY						1		// in milliseconds, while a dolly path plays, so the camera moves smoothly
+	#define FRAME_SLEEP								1		// in milliseconds. Fast loop so the camera updates every rendered frame; movement is scaled by real elapsed time.
+	#define SPEED_REFERENCE_SECONDS					0.008f	// speed settings are 'per 8ms tick' (the old loop rate), keyboard/gamepad input is scaled to that
 	#define IGCS_SUPPORT_RAWKEYBOARDINPUT			true	// if set to false, raw keyboard input is ignored.
 	#define IGCS_MAX_MESSAGE_SIZE					4*1024	// in bytes
 
 	// Keyboard system control
 	#define IGCS_KEY_CAMERA_ENABLE					VK_INSERT
-	#define IGCS_KEY_CAMERA_LOCK					VK_HOME
+	#define IGCS_KEY_CAMERA_LOCK					VK_SCROLL
 	#define IGCS_KEY_ROTATE_RIGHT					VK_RIGHT		// yaw
 	#define IGCS_KEY_ROTATE_LEFT					VK_LEFT
 	#define IGCS_KEY_ROTATE_UP						VK_UP			// pitch
 	#define IGCS_KEY_ROTATE_DOWN					VK_DOWN
-	#define IGCS_KEY_MOVE_FORWARD					VK_NUMPAD8
-	#define IGCS_KEY_MOVE_BACKWARD					VK_NUMPAD5
-	#define IGCS_KEY_MOVE_LEFT						VK_NUMPAD4
-	#define IGCS_KEY_MOVE_RIGHT						VK_NUMPAD6
-	#define IGCS_KEY_MOVE_UP						VK_NUMPAD7
-	#define IGCS_KEY_MOVE_DOWN						VK_NUMPAD9
-	#define IGCS_KEY_TILT_LEFT						VK_NUMPAD1		// roll
-	#define IGCS_KEY_TILT_RIGHT						VK_NUMPAD3
-	#define IGCS_KEY_FOV_RESET						VK_MULTIPLY
-	#define IGCS_KEY_FOV_INCREASE					VK_ADD
-	#define IGCS_KEY_FOV_DECREASE					VK_SUBTRACT
-	#define IGCS_KEY_BLOCK_INPUT					VK_DECIMAL
+	#define IGCS_KEY_MOVE_FORWARD					'W'
+	#define IGCS_KEY_MOVE_BACKWARD					'S'
+	#define IGCS_KEY_MOVE_LEFT						'A'
+	#define IGCS_KEY_MOVE_RIGHT						'D'
+	#define IGCS_KEY_MOVE_UP						'R'
+	#define IGCS_KEY_MOVE_DOWN						'F'
+	#define IGCS_KEY_TILT_LEFT						'Z'		// roll
+	#define IGCS_KEY_TILT_RIGHT						'X'
+	#define IGCS_KEY_FOV_RESET						VK_HOME
+	#define IGCS_KEY_FOV_INCREASE					VK_NEXT
+	#define IGCS_KEY_FOV_DECREASE					VK_PRIOR
+	#define IGCS_KEY_BLOCK_INPUT					VK_BACK
 	#define IGCS_KEY_HUD_TOGGLE						VK_DELETE
-	#define IGCS_KEY_TIMESTOP						VK_NUMPAD0
-	#define IGCS_KEY_SKIP_FRAMES					VK_NEXT
+	#define IGCS_KEY_TIMESTOP						VK_PAUSE
+	#define IGCS_KEY_SKIP_FRAMES					VK_END
 	#define IGCS_KEY_DOLLY_ADD_NODE					VK_F5
 	#define IGCS_KEY_DOLLY_PLAY_STOP				VK_F6
 	#define IGCS_KEY_DOLLY_DELETE_LAST_NODE			VK_F7

@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////////
+﻿////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Part of Injectable Generic Camera System
 // Copyright(c) 2020, Frans Bouma
 // All rights reserved.
@@ -56,27 +56,27 @@ namespace IGCSClient.GameSpecific.Classes
 
 	internal static class GameSpecificKeyBindingDefaults
 	{
-		public const int BlockInputToGameDefault = (int)Keys.Decimal;
+		public const int BlockInputToGameDefault = (int)Keys.Back;
 		public const int EnableDisableCameraDefault = (int)Keys.Insert;
-		public const int DecreaseFoVDefault = (int)Keys.Subtract;
-		public const int IncreaseFoVDefault = (int)Keys.Add;
-		public const int ResetFoVDefault = (int)Keys.Multiply;
-		public const int LockUnlockCameraMovementDefault = (int)Keys.Home;
-		public const int MoveCameraLeftDefault = (int)Keys.NumPad4;
-		public const int MoveCameraRightDefault = (int)Keys.NumPad6;
-		public const int MoveCameraForwardDefault = (int)Keys.NumPad8;
-		public const int MoveCameraBackwardDefault = (int)Keys.NumPad5;
-		public const int MoveCameraUpDefault = (int)Keys.NumPad7;
-		public const int MoveCameraDownDefault = (int)Keys.NumPad9;
+		public const int DecreaseFoVDefault = (int)Keys.PageUp;
+		public const int IncreaseFoVDefault = (int)Keys.PageDown;
+		public const int ResetFoVDefault = (int)Keys.Home;
+		public const int LockUnlockCameraMovementDefault = (int)Keys.Scroll;
+		public const int MoveCameraLeftDefault = (int)Keys.A;
+		public const int MoveCameraRightDefault = (int)Keys.D;
+		public const int MoveCameraForwardDefault = (int)Keys.W;
+		public const int MoveCameraBackwardDefault = (int)Keys.S;
+		public const int MoveCameraUpDefault = (int)Keys.R;
+		public const int MoveCameraDownDefault = (int)Keys.F;
 		public const int RotateCameraUpDefault = (int)Keys.Up;
 		public const int RotateCameraDownDefault = (int)Keys.Down;
 		public const int RotateCameraLeftDefault = (int)Keys.Left;
 		public const int RotateCameraRightDefault = (int)Keys.Right;
-		public const int TiltCameraLeftDefault = (int)Keys.NumPad1;
-		public const int TiltCameraRightDefault = (int)Keys.NumPad3;
+		public const int TiltCameraLeftDefault = (int)Keys.Z;
+		public const int TiltCameraRightDefault = (int)Keys.X;
 		public const int ToggleHUDDefault = (int)Keys.Delete;
-		public const int PauseUnpauseGameDefault = (int)Keys.NumPad0;
-		public const int SkipFramesDefault = (int)Keys.PageDown;
+		public const int PauseUnpauseGameDefault = (int)Keys.Pause;
+		public const int SkipFramesDefault = (int)Keys.End;
 		public const int DollyAddNodeDefault = (int)Keys.F5;
 		public const int DollyPlayStopDefault = (int)Keys.F6;
 		public const int DollyDeleteLastNodeDefault = (int)Keys.F7;

@@ -1,0 +1,36 @@
+[package]
+name = "crittercam"
+version = "0.1.0"
+description = "crittercam client: injects the camera dll into ELDEN RING NIGHTREIGN and sends it settings"
+edition = "2024"
+
+[lib]
+# The `_lib` suffix avoids a name clash between the lib and the bin on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "crittercam_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+windows-sys = { version = "0.59", features = [
+  "Win32_Foundation",
+  "Win32_Security",
+  "Win32_Storage_FileSystem",
+  "Win32_System_Pipes",
+  "Win32_System_IO",
+  "Win32_System_Threading",
+  "Win32_System_Memory",
+  "Win32_System_Diagnostics_Debug",
+  "Win32_System_Diagnostics_ToolHelp",
+  "Win32_System_LibraryLoader",
+] }
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true

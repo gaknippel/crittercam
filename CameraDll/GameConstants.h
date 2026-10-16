@@ -36,6 +36,7 @@ namespace IGCS::GameSpecific
 	#define FOV_CHANGE_SCALE							0.01f
 	#define FOV_MIN										0.01f
 	#define FOV_MAX										3.0f
+	#define PITCH_LIMIT									1.55f	// radians (~89 degrees)
 
 	// AOB Keys for interceptor's AOB scanner
 	#define CAMERA_ADDRESS_INTERCEPT_KEY				"AOB_CAMERA_ADDRESS_INTERCEPT"

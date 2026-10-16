@@ -28,6 +28,7 @@ extern "C" {
 	LPBYTE g_activeCameraStructAddress = nullptr;			// the destination camera we override
 	LPBYTE g_cameraOverrideBuffer = s_overrideBuffers[0];	// the buffer the asm points the routine's source at
 	LPBYTE g_cameraCandidates[MAX_CAMERA_CANDIDATES] = {};	// distinct destinations seen, filled by the asm
+	LPBYTE g_gameSourceCamera = nullptr;					// the game's own camera while ours is on, set by the asm. Character input is relative to it.
 }
 
 namespace IGCS::GameSpecific::CameraManipulator
@@ -101,6 +102,7 @@ namespace IGCS::GameSpecific::CameraManipulator
 			g_cameraCandidates[i] = nullptr;
 		}
 		g_cameraStructAddress = nullptr;
+		g_gameSourceCamera = nullptr;		// may point to a freed camera from last time; the asm sets it again once ours is on
 		Sleep(100);		// a few frames, the asm fills the table again
 		if (nullptr == g_cameraStructAddress)
 		{

@@ -10,14 +10,12 @@
 ;---------------------------------------------------------------
 ; Public definitions so the linker knows which names are present in this file
 PUBLIC cameraStructInterceptor
-PUBLIC hudOpacityReadInterceptor
 ;---------------------------------------------------------------
 
 ;---------------------------------------------------------------
 ; Externs which are used and set by the system. Read / write these
 ; values in asm to communicate with the system
 EXTERN g_cameraEnabled: byte
-EXTERN g_hudHidden: byte
 EXTERN g_cameraStructAddress: qword
 EXTERN g_activeCameraStructAddress: qword
 EXTERN g_cameraOverrideBuffer: qword
@@ -96,27 +94,6 @@ originalCode:
 cameraStructInterceptor ENDP
 
 
-hudOpacityReadInterceptor PROC
-; EXPERIMENTAL. Otis_Inf's Elden Ring tools hook this function for the HUD toggle. It's a small leaf function returning a
-; 32 byte value. We replace the whole function. When the HUD is hidden we return zeros. If hiding the HUD breaks something
-; else in the game, toggle it back on: this function might be shared with other code.
-;nightreign.exe+12C5C60 - 41 0F28 00            - movaps xmm0,[r8]			<< INTERCEPT HERE
-;nightreign.exe+12C5C64 - 48 8B C2              - mov rax,rdx
-;nightreign.exe+12C5C67 - 41 0F28 48 10         - movaps xmm1,[r8+10]
-;nightreign.exe+12C5C6C - 0F29 02               - movaps [rdx],xmm0
-;nightreign.exe+12C5C6F - 0F29 4A 10            - movaps [rdx+10],xmm1
-;nightreign.exe+12C5C73 - C3                    - ret
-	movaps xmm0, xmmword ptr [r8]
-	mov rax, rdx
-	movaps xmm1, xmmword ptr [r8+10h]
-	cmp byte ptr [g_hudHidden], 1
-	jne writeResult
-	xorps xmm0, xmm0
-	xorps xmm1, xmm1
-writeResult:
-	movaps xmmword ptr [rdx], xmm0
-	movaps xmmword ptr [rdx+10h], xmm1
-	ret
-hudOpacityReadInterceptor ENDP
+
 
 END

@@ -22,14 +22,11 @@ using namespace std;
 // external asm functions
 extern "C" {
 	void cameraStructInterceptor();
-	void hudOpacityReadInterceptor();
 }
 
 // external addresses used in asm.
 extern "C" {
 	LPBYTE _cameraStructInterceptionContinue = nullptr;
-	LPBYTE _hudOpacityReadInterceptionContinue = nullptr;		// unused: the HUD interceptor returns to the caller itself.
-	uint8_t g_hudHidden = 0;
 }
 
 
@@ -42,9 +39,17 @@ namespace IGCS::GameSpecific::InterceptorHelper
 		aobBlocks[CAMERA_ADDRESS_INTERCEPT_KEY] = new AOBBlock(CAMERA_ADDRESS_INTERCEPT_KEY, "8B 41 50 49 8B 11 89 42 50 8B 41 54 89 42 54 8B 41 58 E9", 1);
 		// mov rax,[global] ; movss xmm1,[rax+2D4] ; mulss xmm1,[rax+270]. 3 matches, all read the same global. RVA 0xF2E235.
 		aobBlocks[TIME_DILATION_LOCATION_KEY] = new AOBBlock(TIME_DILATION_LOCATION_KEY, "48 8B 05 | ?? ?? ?? ?? F3 0F 10 88 ?? ?? ?? ?? F3 0F 59 88 ?? ?? ?? ?? 48 8D", 1);
-		// 32 byte copy function used by Otis_Inf's HUD toggle in Elden Ring. Identical in Nightreign. RVA 0x12C5C60.
-		aobBlocks[HUD_OPACITY_READ_INTERCEPT_KEY] = new AOBBlock(HUD_OPACITY_READ_INTERCEPT_KEY, "41 0F 28 00 48 8B C2 41 0F 28 48 ?? 0F 29 02 0F 29 4A", 1);
+		// CS::CSGraphicsImp, which holds the HUD on/off option at +0x1189. Global RVA 0x3C1A680, 2 matches, both this global.
+		aobBlocks[GRAPHICS_MAN_LOCATION_KEY] = new AOBBlock(GRAPHICS_MAN_LOCATION_KEY, "48 8B 05 | ?? ?? ?? ?? 48 85 C0 74 17 48 8B 48 68 48 85 C9", 1);
 		// mov rax,[WorldChrMan] ; test rax,rax ; je ; mov rcx,[rax+174E8] (the local player). 29 matches, all the same global. RVA 0x1F058F.
+		// PlayAnimation(&hkbCharacterField, L"W_Event80010") from The Grand Archives' ER table (their pattern - 0xD). Unique. RVA 0xD502B0.
+		// Nightreign wants the event name as utf-16, ER took ascii.
+		aobBlocks[PLAY_ANIMATION_KEY] = new AOBBlock(PLAY_ANIMATION_KEY, "40 53 48 83 EC 40 48 83 39 00 48 8B D9 74 ?? 48 85 D2 74 ?? 48 8D 4C 24 50", 1);
+		// Event flags (CS::CSFD4VirtualMemoryFlag, flag id / 1000 = block). Global RVA 0x3C115A8: 2 matches, both this global.
+		aobBlocks[EVENT_FLAG_MAN_LOCATION_KEY] = new AOBBlock(EVENT_FLAG_MAN_LOCATION_KEY, "48 8B 3D | ?? ?? ?? ?? 83 F9 FF 41 8B C4 0F 45 C1 89 44 24", 1);
+		// bool GetEventFlag(manager, flagId), RVA 0x60CE40. void SetEventFlag(manager, flagId, state), RVA 0x60D330. Both unique.
+		aobBlocks[GET_EVENT_FLAG_KEY] = new AOBBlock(GET_EVENT_FLAG_KEY, "44 8B 41 1C 44 8B DA 33 D2 41 8B C3 41 F7 F0", 1);
+		aobBlocks[SET_EVENT_FLAG_KEY] = new AOBBlock(SET_EVENT_FLAG_KEY, "48 89 5C 24 08 44 8B 49 1C 44 8B D2 33 D2 41 8B C2 41 F7 F1", 1);
 		aobBlocks[WORLD_CHR_MAN_LOCATION_KEY] = new AOBBlock(WORLD_CHR_MAN_LOCATION_KEY, "48 8B 05 | ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B 88 E8 74 01 00", 1);
 
 		map<string, AOBBlock*>::iterator it;
@@ -77,9 +82,6 @@ namespace IGCS::GameSpecific::InterceptorHelper
 
 	void setPostCameraStructHooks(map<string, AOBBlock*> &aobBlocks)
 	{
-		// The HUD interceptor replaces the whole (20 byte) function and returns to the caller itself.
-		GameImageHooker::setHook(aobBlocks[HUD_OPACITY_READ_INTERCEPT_KEY], 0x14, &_hudOpacityReadInterceptionContinue, &hudOpacityReadInterceptor);
-
 		AOBBlock* timeDilationBlock = aobBlocks[TIME_DILATION_LOCATION_KEY];
 		if (nullptr != timeDilationBlock->locationInImage())
 		{
@@ -89,13 +91,16 @@ namespace IGCS::GameSpecific::InterceptorHelper
 	}
 
 
+	// Writes the game's own "HUD: on/off" option, so it hides exactly what that setting hides (item icons included).
 	void toggleHud(map<string, AOBBlock*>& aobBlocks, bool hudVisible)
 	{
-		if (nullptr == aobBlocks[HUD_OPACITY_READ_INTERCEPT_KEY]->locationInImage())
+		AOBBlock* graphicsBlock = aobBlocks[GRAPHICS_MAN_LOCATION_KEY];
+		LPBYTE graphics = nullptr == graphicsBlock->locationInImage() ? nullptr : *reinterpret_cast<LPBYTE*>(Utils::calculateAbsoluteAddress(graphicsBlock, 4));
+		if (nullptr == graphics)
 		{
-			MessageHandler::addNotification("HUD toggle isn't available for this game version");
+			MessageHandler::addNotification("HUD toggle isn't available right now");
 			return;
 		}
-		g_hudHidden = hudVisible ? (uint8_t)0 : (uint8_t)1;
+		graphics[HUD_OPTION_OFFSET] = hudVisible ? 1 : 0;
 	}
 }

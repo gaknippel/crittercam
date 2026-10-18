@@ -1,6 +1,6 @@
 [package]
 name = "crittercam"
-version = "0.2.0"
+version = "0.2.2"
 description = "crittercam client: injects the camera dll into ELDEN RING NIGHTREIGN and sends it settings"
 edition = "2024"
 

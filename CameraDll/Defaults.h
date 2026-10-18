@@ -119,5 +119,12 @@ namespace IGCS
 	enum class ActionMessageType : uint8_t
 	{
 		RehookXInput = 1,
+		PlayAnimation = 2,	// payload: utf-8 behavior event name, e.g. W_Event80010
+		SetFloating = 3,	// payload: 1 byte, 1 = on
+		Lift = 4,			// payload: float meters
+		SetInvincible = 5,	// payload: 1 byte, 1 = on (no death + no damage)
+		EnemiesPassive = 6,	// payload: 1 byte, 1 = on (enemies ignore you)
+		SetEventFlag = 7,	// payload: uint32 flag id, 1 byte state
+		GetEventFlag = 8,	// payload: uint32 flag id. The dll answers with a notification
 	};
 }

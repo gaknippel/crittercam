@@ -34,6 +34,8 @@
 #include "Globals.h"
 #include "InputHooker.h"
 #include "CameraManipulator.h"
+#include "Studio.h"
+#include "Utils.h"
 
 namespace IGCS
 {
@@ -221,6 +223,45 @@ namespace IGCS
 		{
 		case ActionMessageType::RehookXInput:
 			InputHooker::setXInputHook(true);
+			break;
+		case ActionMessageType::PlayAnimation:
+			Studio::playAnimation(std::string(reinterpret_cast<char*>(buffer + 2), bytesRead - 2));
+			break;
+		case ActionMessageType::SetFloating:
+			if (bytesRead >= 3)
+			{
+				Studio::setFloating(1 == buffer[2]);
+			}
+			break;
+		case ActionMessageType::SetInvincible:
+			if (bytesRead >= 3)
+			{
+				Studio::setInvincible(1 == buffer[2]);
+			}
+			break;
+		case ActionMessageType::EnemiesPassive:
+			if (bytesRead >= 3)
+			{
+				Studio::setEnemiesPassive(1 == buffer[2]);
+			}
+			break;
+		case ActionMessageType::SetEventFlag:
+			if (bytesRead >= 7)
+			{
+				Studio::setEventFlag(static_cast<uint32_t>(Utils::intFromBytes(buffer, bytesRead, 2)), 1 == buffer[6]);
+			}
+			break;
+		case ActionMessageType::GetEventFlag:
+			if (bytesRead >= 6)
+			{
+				Studio::reportEventFlag(static_cast<uint32_t>(Utils::intFromBytes(buffer, bytesRead, 2)));
+			}
+			break;
+		case ActionMessageType::Lift:
+			if (bytesRead >= 6)
+			{
+				Studio::lift(Utils::floatFromBytes(buffer, bytesRead, 2));
+			}
 			break;
 		}
 	}

@@ -1,0 +1,116 @@
+====== Parts (NR) ======
+^ ID ^ Description ^
+| bd_m_1427 | Unknown |
+| bd_m_5000 | Wylder |
+| bd_m_5010 | Guardian |
+| bd_m_5020 | Ironeye (Default) |
+| bd_m_5025 | Ironeye (Traitor) |
+| bd_m_5030 | Duchess |
+| bd_m_5031 | Duchess (Priestess) |
+| bd_m_5040 | Raider |
+| bd_m_5050 | Revenant |
+| bd_m_5060 | Recluse |
+| bd_m_5070 | Executor |
+| bd_m_5080 | Scholar |
+| bd_m_5090 | Undertaker |
+| bd_m_5100 | Wylder (Dawn) |
+| bd_m_5110 | Guardian (Dawn) |
+| bd_m_5120 | Ironeye (Dawn) |
+| bd_m_5130 | Duchess (Dawn) |
+| bd_m_5140 | Raider (Dawn) |
+| bd_m_5150 | Revenant (Dawn) |
+| bd_m_5160 | Recluse (Dawn) |
+| bd_m_5170 | Executor (Dawn) |
+| bd_m_5180 | Scholar (Dawn) |
+| bd_m_5190 | Undertaker (Dawn) |
+| bd_m_5200 | Wylder (Darkness) |
+| bd_m_5210 | Guardian (Darkness) |
+| bd_m_5220 | Ironeye (Darkness) |
+| bd_m_5230 | Duchess (Darkness) |
+| bd_m_5240 | Raider (Darkness) |
+| bd_m_5250 | Revenant (Darkness) |
+| bd_m_5260 | Recluse (Darkness) |
+| bd_m_5270 | Executor (Darkness) |
+| bd_m_5280 | Scholar (Darkness) |
+| bd_m_5290 | Undertaker (Darkness) |
+| bd_m_5300 | Wylder (Remembrance) |
+| bd_m_5310 | Guardian (Remembrance) |
+| bd_m_5320 | Ironeye (Remembrance) |
+| bd_m_5330 | Duchess (Remembrance) |
+| bd_m_5340 | Raider (Remembrance) |
+| bd_m_5345 | Raider (Remembrance) - Alt |
+| bd_m_5350 | Revenant (Remembrance) |
+| bd_m_5360 | Recluse (Remembrance) |
+| bd_m_5370 | Executor (Remembrance) |
+| bd_m_5380 | Scholar (Remembrance) |
+| bd_m_5390 | Undertaker (Remembrance) |
+| bd_m_5500 | Wylder (Abysswalker) |
+| bd_m_5510 | Guardian (Sunlight Knight) |
+| bd_m_5520 | Ironeye (Ringfinger) |
+| bd_m_5530 | Duchess (Black Leather) |
+| bd_m_5540 | Raider (Rock-like) |
+| bd_m_5550 | Revenant (The Sister in the Painting) |
+| bd_m_5560 | Recluse (Heretic Sorcerer) |
+| bd_m_5570 | Executor (Thorns) |
+| bd_m_5580 | Scholar (Pardoner) |
+| bd_m_5590 | Undertaker (Brass) |
+| bd_m_5600 | Wylder (Lion Knight) |
+| bd_m_5610 | Guardian (Wayfarer) |
+| bd_m_5620 | Ironeye (Sellsword) |
+| bd_m_5630 | Executor (Sable Church) |
+| bd_m_5640 | Raider (Catarina) |
+| bd_m_5650 | Revenant (Dragon School) |
+| bd_m_5660 | Recluse (Emerald Fate) |
+| bd_m_5670 | Duchess (Wraith) |
+| bd_m_5680 | Scholar (Xanthous) |
+| bd_m_5690 | Undertaker (Lord's Blade) |
+| bd_m_6050 | Revenant Head (Chloe) (for Cutscene) |
+| bd_m_6051 | Revenant Head (Doll) (for Cutscene) |
+| fc_f_0003 | Duchess' Head (for Cutscene) |
+| hd_m_0300 | Parasitic Egg Head  |
+| hd_m_0310 | Parasitic Egg Head (Hatched) |
+| wp_a_5000 | Wylder's Greatsword |
+| wp_a_5001 | Wylder's Small Shield |
+| wp_a_5002 | Claw Shot |
+| wp_a_5003 | Onslaught Stake |
+| wp_a_5010 | Guardian's Halberd |
+| wp_a_5011 | Guardian's Greatshield |
+| wp_a_5020 | Ironeye's Bow |
+| wp_a_5021 | Unused Crossbow |
+| wp_a_5022 | Single Shot |
+| wp_a_5023 | Stowed Single Shot |
+| wp_a_5024 | Marking |
+| wp_a_5030 | Duchess' Dagger |
+| wp_a_5031 | Restage |
+| wp_a_5032 | Finale |
+| wp_a_5040 | Raider's Greataxe |
+| wp_a_5041 | Totem Stela |
+| wp_a_5050 | Immortal March / Cursed Claw Helper (Right) |
+| wp_a_5051 | Summon Spirit |
+| wp_a_5052 | Revenant's Cursed Claws |
+| wp_a_5053 | Cursed Claw Helper (Left) |
+| wp_a_5060 | Recluse's Staff |
+| wp_a_5061 | Magic Cocktail |
+| wp_a_5062 | Soulblood Song |
+| wp_a_5070 | Executor's Blade |
+| wp_a_5071 | Cursed Sword / Suncatcher |
+| wp_a_5080 | Scholar's Thrusting Sword |
+| wp_a_5081 | Analyze |
+| wp_a_5082 | Communion |
+| wp_a_5090 | Undertaker's Hammer  |
+| wp_a_5091 | Trance |
+| wp_a_5092 | Loathsome Hex |
+| wp_a_5180 | Scholar's Thrusting Sword (Dawn) |
+| wp_a_5191 | Trance (Dawn) |
+| wp_a_5271 | Cursed Sword (Dark) |
+| wp_a_5280 | Scholar's Thrusting Sword (Darkness) |
+| wp_a_5291 | Trance (Darkness) |
+| wp_a_5324 | Marking (Remembrance) |
+| wp_a_5580 | Scholar's Thrusting Sword (Pardoner) |
+| wp_a_5591 | Trance (Brass) |
+| wp_a_5691 | Trance (Lord's Blade) |
+| wp_a_6000 | Spectral Hawk |
+| wp_a_6012 | Wings of Salvation |
+| wp_a_8900 | Suncatcher |
+| wp_a_8901 | The Nighlord's Body |
+| wp_a_8902 | The Nighlord's Head |

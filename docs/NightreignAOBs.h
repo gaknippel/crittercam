@@ -42,10 +42,11 @@ namespace NightreignAOB
     constexpr int TIME_DILATION_FACTOR_OFFSET = 0x270;   // verify
 
     // ---------------------------------------------------------------------------------
-    // HUD OPACITY  (matches unchanged; surrounding code is identical to ER)
-    // Copies a 32-byte color/opacity value from [r8] to [rdx]. Hook and zero the alpha to hide the HUD.
-    // NR RVA: 0x12C5C60
-    constexpr const char* HUD_OPACITY_READ = "41 0F 28 00 48 8B C2 41 0F 28 48 ?? 0F 29 02 0F 29 4A";
+    // HUD (2026-10-18): the game's own HUD option, CS::CSGraphicsImp +0x1189 (1 on, 0 off). Found by diffing memory while toggling
+    // Settings > HUD. Replaces the old HUD_OPACITY_READ hook (Otis's ER guess), which missed the item/skill icons.
+    // Global RVA 0x3C1A680, 2 matches, both this global.
+    constexpr const char* GRAPHICS_MAN = "48 8B 05 | ?? ?? ?? ?? 48 85 C0 74 17 48 8B 48 68 48 85 C9";
+    // PAUSE: speed 0 makes the game's own camera fly off (it divides by the frame time). Pause uses 0.0001 instead.
 
     // ---------------------------------------------------------------------------------
     // INVISIBILITY TO ENEMIES  (matches unchanged; one nearby field moved 0xC980 -> 0xC970)
@@ -58,6 +59,37 @@ namespace NightreignAOB
     //   WorldChrMan +0x174E8 local PlayerIns*, +0x17E60 ChrIns* array (players then enemies, ends at the first non-character)
     //   ChrIns +0x1B8 module bag: +0x0 CSChrDataModule (hp int at +0x140), +0x68 CSChrPhysicsModule (quat +0x60, position +0x70)
     constexpr const char* WORLD_CHR_MAN = "48 8B 05 | ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B 88 E8 74 01 00";
+
+    // ---------------------------------------------------------------------------------
+    // PLAY ANIMATION  (The Grand Archives ER table: AOB "74 ?? 48 85 d2 74 ?? 48 8d 4c 24 50" - 0xD, unique in NR too)
+    // int PlayAnimation(hkbCharacter** field, const wchar_t* behaviorEvent). NR takes UTF-16 (ER: ascii). 0 = ok, -1 = unknown event.
+    // field = [[ChrIns+0x1B8]+0x28 (CSChrBehaviorModule)]+0x10, then +0x30 (that slot holds the hkbCharacter*).
+    // Gestures are W_Event80000..W_Event81370 (78 found in memory). Called from a non-game thread, like CE's executeCodeEx.
+    // NR RVA: 0xD502B0
+    constexpr const char* PLAY_ANIMATION = "40 53 48 83 EC 40 48 83 39 00 48 8B D9 74 ?? 48 85 D2 74 ?? 48 8D 4C 24 50";
+    // CURRENT CLIP: bag +0x18 CSChrTimeActModule: +0x34 int animation id (W_Event80070 plays 80070), +0x3C float time,
+    //   +0x40 float length (wave 5.67s). Gesture clips loop (time wraps to 0); one-shot clips (prayer) stop at length;
+    //   sitting gestures move on to id+1 (the seated loop). Used for play once (2026-10-18).
+    // NO GRAVITY: CSChrPhysicsModule +0x1E7 byte (ER +0x1D3). Found by flipping bytes and checking the player stops falling.
+    // +0x1EA also holds the player in the air (unknown what else it does).
+
+    // CHARACTER FLAGS (found live 2026-10-18)
+    //   WorldChrMan +0x17B98 / +0x17BA0: begin / end of all ChrIns* (hub and runs). +0x17E60 is only filled in the hub.
+    //   CSChrDataModule +0x19B bit 0 = no death (works, hp stops at 1). Bit 1 (ER no damage) does nothing; refill hp (+0x140 = +0x144) instead.
+    //   ChrIns +0x74 = team type (1 player, 6 enemy, 47 = helpers attached to the player). Same team: their hits do no damage, they still attack.
+    //   CSChrBehaviorModule +0x1818 = animation speed float (ER 0x17C8). 0 = frozen statue, can't attack.
+    //   Enemies ignore you: keep every enemy's team = the player's team, every frame (Studio::updateEnemyTeams). Tested on
+    //   Gladius: alive, moving, never targets you. Teams seen on enemies: 0, 6, 7, 11, 30, 33. Freeze (above) was dropped for this.
+    //   Nightreign EMEVD has DisableCharacterAI/EnableCharacterAI; the flag it flips wasn't found (diff attempt missed the window).
+    //   ER's ChrIns +0x538 flag block (no hit / no attack / no move) is NOT at +0x560 in NR: that's a number. Not found yet.
+
+    // EVENT FLAGS (found live 2026-10-18). CS::CSFD4VirtualMemoryFlag at global RVA 0x3C115A8 (divisor +0x1C = 1000).
+    //   "48 8B 3D | ?? ?? ?? ?? 83 F9 FF 41 8B C4 0F 45 C1 89 44 24" (2 matches, same global)
+    //   bool GetEventFlag(mgr, id)        RVA 0x60CE40  "44 8B 41 1C 44 8B DA 33 D2 41 8B C3 41 F7 F0"
+    //   void SetEventFlag(mgr, id, state) RVA 0x60D330  "48 89 5C 24 08 44 8B 49 1C 44 8B D2 33 D2 41 8B C2 41 F7 F1"
+    // Run state flags 75xx (day N started / boss started / boss defeated, 7522 last boss warp) are RECORDS: setting them mid-run
+    // does nothing visible. Day progression runs on its own state machine. ER's Lua grace warp (LuaWarp) doesn't exist in NR.
+    // Plan: mod EMEVD (WarpPlayer / ChangeCharacterEnableState) that waits on a borrowed unused flag (e.g. 7514), set from the app.
 
     // ---------------------------------------------------------------------------------
     // NOT PORTED YET (no match in NR; not needed for free cam / dolly / pause)

@@ -37,6 +37,7 @@ namespace IGCS::GameSpecific
 	#define FOV_MIN										0.01f
 	#define FOV_MAX										3.0f
 	#define GAME_SPEED_MIN								0.01f
+	#define GAME_SPEED_PAUSED							0.0001f	// not 0: the game's own camera divides by the frame time and flies off to a random spot at exactly 0
 	#define GAME_SPEED_MAX								4.0f
 	#define GAME_SPEED_WHEEL_STEP						1.15f	// shift + one wheel notch multiplies/divides the game speed by this
 	#define GAME_SPEED_WHEEL_MIN						0.05f	// same lower end as the client's slider
@@ -46,18 +47,36 @@ namespace IGCS::GameSpecific
 	// AOB Keys for interceptor's AOB scanner
 	#define CAMERA_ADDRESS_INTERCEPT_KEY				"AOB_CAMERA_ADDRESS_INTERCEPT"
 	#define TIME_DILATION_LOCATION_KEY					"AOB_TIME_DILATION_LOCATION"
-	#define HUD_OPACITY_READ_INTERCEPT_KEY				"AOB_HUD_OPACITY_READ_INTERCEPT"
+	#define GRAPHICS_MAN_LOCATION_KEY					"AOB_GRAPHICS_MAN_LOCATION"
+	#define HUD_OPTION_OFFSET							0x1189		// CSGraphicsImp -> byte, the game's HUD setting: 1 on, 0 off (found 2026-10-18)
 	#define WORLD_CHR_MAN_LOCATION_KEY					"AOB_WORLD_CHR_MAN_LOCATION"
+	#define PLAY_ANIMATION_KEY							"AOB_PLAY_ANIMATION"
+	#define EVENT_FLAG_MAN_LOCATION_KEY					"AOB_EVENT_FLAG_MAN_LOCATION"
+	#define GET_EVENT_FLAG_KEY							"AOB_GET_EVENT_FLAG"
+	#define SET_EVENT_FLAG_KEY							"AOB_SET_EVENT_FLAG"
 
 	// Characters (found with RTTI on 2026-10-17, see docs/NightreignAOBs.h). WorldChrMan is CS::WorldChrManImp.
 	#define WORLD_CHR_MAN_MAIN_PLAYER_OFFSET			0x174E8		// PlayerIns* of the local player
-	#define WORLD_CHR_MAN_CHARACTERS_OFFSET				0x17E60		// ChrIns* array: players, then enemies. Ends at the first non-character
+	#define WORLD_CHR_MAN_CHARACTERS_BEGIN_OFFSET		0x17B98		// ChrIns** begin of all loaded characters (players, then enemies). Works in the hub and in runs
+	#define WORLD_CHR_MAN_CHARACTERS_END_OFFSET			0x17BA0		// ChrIns** end (one past the last)
 	#define MAX_CHARACTERS								256
 	#define CHR_MODULES_OFFSET							0x1B8		// ChrIns -> module bag
 	#define CHR_DATA_MODULE_OFFSET						0x0			// bag -> CSChrDataModule
 	#define CHR_PHYSICS_MODULE_OFFSET					0x68		// bag -> CSChrPhysicsModule
 	#define CHR_HP_OFFSET								0x140		// CSChrDataModule -> current hp (int)
+	#define CHR_MAX_HP_OFFSET							0x144		// CSChrDataModule -> max hp (int)
+	#define CHR_DEBUG_FLAGS_OFFSET						0x19B		// CSChrDataModule -> bit 0 no death (verified: hp stops at 1). ER's bit 1 no damage doesn't work here
+	#define CHR_TEAM_TYPE_OFFSET						0x74		// ChrIns -> byte, 1 = player, 6 = enemy (ER +0x6C). Same team = their hits do no damage, they still attack
+	#define TEAM_TYPE_PLAYER_ATTACHMENT					47			// invisible helper characters that follow the player around: never freeze these
 	#define CHR_POSITION_OFFSET							0x70		// CSChrPhysicsModule -> x, y, z (floats)
+	#define CHR_NO_GRAVITY_OFFSET						0x1E7		// CSChrPhysicsModule -> byte, 1 = no gravity (ER had it at 0x1D3). Gestures still play
+	#define CHR_TIME_ACT_MODULE_OFFSET					0x18		// bag -> CSChrTimeActModule (found 2026-10-18)
+	#define TIME_ACT_ANIMATION_ID_OFFSET				0x34		// CSChrTimeActModule -> int, clip playing now (W_Event80070 plays 80070)
+	#define TIME_ACT_ANIMATION_TIME_OFFSET				0x3C		// -> float, seconds into the clip. Looping clips wrap back to 0
+	#define TIME_ACT_ANIMATION_LENGTH_OFFSET			0x40		// -> float, clip length in seconds
+	#define CHR_BEHAVIOR_MODULE_OFFSET					0x28		// bag -> CSChrBehaviorModule
+	#define CHR_BEHAVIOR_HKB_HOLDER_OFFSET				0x10		// CSChrBehaviorModule -> object holding the hkbCharacter pointer
+	#define HKB_CHARACTER_FIELD_OFFSET					0x30		// that object -> hkbCharacter* (PlayAnimation takes the address of this field)
 
 	// Camera struct layout. Same as Elden Ring. The game copies a source camera into the render camera:
 	//   +0x10 .. +0x4F  4x4 matrix: row 0 = right, row 1 = up, row 2 = forward, row 3 = position (w = 1)

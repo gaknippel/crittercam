@@ -1,0 +1,279 @@
+====== Characters (NR) ======
+^ ID ^ Description ^
+| c0000 | Player |
+| c0010 | Executor Beast |
+| c0100 | Dummy |
+| c1000 | Dummy |
+| c2010 | Blaidd, the Half-Wolf |
+| c2040 | Juvenile Scholar |
+| c2041 | Larva of Rot |
+| c2100 | Black Knife Assassin |
+| c2130 | Fell Omen / Morgott |
+| c2140 | Omen |
+| c2150 | Lightning Ball |
+| c2270 | Giant Crab |
+| c2271 | Crab |
+| c2274 | Giant Sleep Crab |
+| c2275 | Sleep Crab |
+| c2276 | Giant Death Crab |
+| c2500 | Crucible Knight |
+| c3000 | Exile Soldier |
+| c3010 | Banished Knight |
+| c3020 | Exile Soldier (Large) |
+| c3050 | Commander Niall/O'Neill |
+| c3060 | Giant Skeleton |
+| c3061 | Giant Beast Skeleton |
+| c3070 | Dominula Celebrant |
+| c3080 | Imp |
+| c3100 | Bell Bearing Hunter / Elemer of the Briar |
+| c3150 | Night's Cavalry |
+| c3160 | Funeral Steed |
+| c3170 | Albinauric Archer |
+| c3180 | Albinauric Archer's Wolf |
+| c3181 | Red Wolf of Radagon |
+| c3200 | Nomadic Merchant |
+| c3201 | Frenzied Nomad |
+| c3250 | Draconic Tree Sentinel |
+| c3251 | Tree Sentinel |
+| c3252 | Royal Carian Knight / Loretta |
+| c3300 | Nox Warrior |
+| c3320 | Silver Tear |
+| c3330 | Silver Tear Ball |
+| c3350 | Crystalian |
+| c3360 | Ancestral Follower |
+| c3361 | Putrid Ancestral Follower |
+| c3370 | Ancestral Follower Shaman |
+| c3371 | Putrid Ancestral Follower Shaman |
+| c3400 | Grave Warden Duelist |
+| c3450 | Misbegotten |
+| c3451 | Scaly Misbegotten |
+| c3460 | Leonine Misbegotten |
+| c3470 | Albinauric |
+| c3471 | Large Albinauric |
+| c3500 | Grave Skeleton |
+| c3550 | Sanguine Noble |
+| c3560 | Godskin Apostle |
+| c3570 | Godskin Noble |
+| c3600 | Stoneskin Lord |
+| c3610 | Oracle Envoy |
+| c3620 | Oracle Envoy (Large) |
+| c3650 | Erdtree Guardian |
+| c3660 | Commoner |
+| c3661 | Shambling Corpse |
+| c3662 | Shambling Corpse (Large) |
+| c3664 | Cemetery Shade |
+| c3670 | Aged Albinauric |
+| c3700 | Depraved Perfumer |
+| c3701 | Perfumer |
+| c3702 | Glintstone Sorcerer |
+| c3703 | Page |
+| c3704 | Battlemage |
+| c3730 | Graven Mass |
+| c3750 | Clayman |
+| c3800 | Cleanrot Knight |
+| c3810 | Kindred of Rot |
+| c3850 | Marionette Soldier |
+| c3900 | Fire Monk |
+| c3901 | Blackflame Monk |
+| c3910 | Fire Prelate |
+| c3950 | Man-Serpent |
+| c3970 | Azula Beastman |
+| c4000 | Revenant Follower |
+| c4020 | Royal Revenant |
+| c4021 | Large Royal Revenant |
+| c4040 | Slug |
+| c4050 | Kaiden Sellsword |
+| c4060 | Kaiden Sellsword's Horse |
+| c4070 | Wolf |
+| c4071 | White Wolf |
+| c4080 | Rat |
+| c4090 | Giant Rat |
+| c4100 | Demi-Human |
+| c4101 | Demi-Human (Large) |
+| c4110 | Demi-Human Shaman |
+| c4120 | Demi-Human Chief |
+| c4130 | Demi-Human Queen |
+| c4140 | Snail |
+| c4150 | Basilisk |
+| c4160 | Stray (Large) |
+| c4161 | Stray |
+| c4164 | Bloodbane Stray (Large) |
+| c4165 | Bloodbane Stray |
+| c4166 | Rotten Stray (Large) |
+| c4167 | Rotten Stray |
+| c4170 | Putrid Flesh |
+| c4171 | Putrid Flesh (Large) |
+| c4180 | Spirit Jellyfish |
+| c4181 | Maris' Jellyfish |
+| c4190 | Large Scarab |
+| c4191 | Scarab |
+| c4200 | Man-Bat |
+| c4201 | Operatic Bat |
+| c4210 | Warhawk/Stormhawk |
+| c4230 | Land Octopus (Small) |
+| c4240 | Fingercreeper |
+| c4241 | Fingercreeper (Huge) |
+| c4250 | Fingercreeper (Small) |
+| c4260 | Erdtree Burial Watchdog |
+| c4270 | Elder Lion |
+| c4280 | Giant Ant |
+| c4281 | Giant Ant (Skull Plate) |
+| c4290 | Bloodhound Knight |
+| c4300 | Wandering Noble |
+| c4310 | Lordsworn Soldier |
+| c4311 | Godrick Soldier |
+| c4312 | Raya Lucaria Soldier |
+| c4313 | Leyndell Soldier |
+| c4314 | Radahn Soldier |
+| c4315 | Mausoleum Soldier |
+| c4316 | Haligtree Soldier |
+| c4320 | Vulgar Militia (Large) |
+| c4321 | Vulgar Militia |
+| c4340 | Mad Pumpkin Head |
+| c4350 | Lordsworn Knight |
+| c4351 | Godrick Knight |
+| c4352 | Cuckoo Knight |
+| c4353 | Leyndell Knight |
+| c4354 | Redmane Knight |
+| c4355 | Mausoleum Knight |
+| c4356 | Haligtree Knight |
+| c4360 | Lordsworn Knight's Horse |
+| c4363 | Leyndell Knight's Horse |
+| c4370 | Foot Soldier |
+| c4371 | Godrick Foot Soldier |
+| c4372 | Raya Lucaria Foot Soldier |
+| c4373 | Leyndell Foot Soldier |
+| c4374 | Radahn Foot Soldier |
+| c4375 | Mausoleum Foot Soldier |
+| c4376 | Haligtree Foot Soldier |
+| c4377 | Highwayman |
+| c4380 | Starcaller |
+| c4381 | Guilty |
+| c4382 | Miner |
+| c4383 | Stonedigger |
+| c4384 | Large Stonedigger |
+| c4385 | Mushroom Sorcerer |
+| c4386 | Blackflame Guilty |
+| c4420 | Giant Crayfish |
+| c4430 | Sentry Stone |
+| c4440 | Land Squirt |
+| c4450 | Walking Mausoleum |
+| c4460 | Flame Chariot |
+| c4470 | Abductor Virgin |
+| c4480 | Miranda Blossom |
+| c4481 | Miranda Sprout |
+| c4490 | Living Jar |
+| c4491 | Living Jar (Small) |
+| c4500 | Flying Dragon of the Hills |
+| c4501 | Decaying Rancor Dragon |
+| c4503 | Mountaintop Ice Dragon |
+| c4505 | Flying Dragon (Small) |
+| c4510 | Ancient Dragon |
+| c4550 | Giant Dog |
+| c4560 | Giant Crow |
+| c4561 | Bloodbane Giant Crow |
+| c4570 | Wormface |
+| c4580 | Large Wormface |
+| c4600 | Troll |
+| c4601 | Carian Troll Knight |
+| c4602 | Snowfield Troll |
+| c4603 | Stonedigger Troll |
+| c4620 | Naturalborn of the Void / Astel |
+| c4630 | Runebear |
+| c4640 | Ulcerated Tree Spirit |
+| c4641 | Balancers / Weapon-Bequeathed Harmonia (Everdark Worm) |
+| c4650 | Dragonkin Soldier |
+| c4660 | Guardian Golem |
+| c4670 | Ancestor Spirit |
+| c4680 | Fallingstar Beast |
+| c4690 | Grafted Scion |
+| c4750 | Grafted Monarch / Godrick |
+| c4770 | Valiant Gargoyle/Black Blade Kindred |
+| c4800 | Lord of Blood / Mohg |
+| c4801 | Lord of Blood Spear |
+| c4810 | Erdtree Avatar |
+| c4811 | Putrid Avatar |
+| c4820 | Omenkiller |
+| c4900 | Fissure in the Fog / Caligo, Miasma of Night |
+| c4901 | Fissure in the Fog / Caligo, Miasma of Night (Everdark) |
+| c4910 | Magma Wyrm |
+| c4911 | Great Wyrm |
+| c4950 | Tibia Mariner |
+| c4960 | Giant Skeleton Torso |
+| c4961 | Sebastian (Giant Skeleton Torso) |
+| c4980 | Death Rite Bird |
+| c5010 | Golden Hippopotamus (Large) |
+| c5011 | Golden Hippopotamus (Small) |
+| c5040 | Curseblade |
+| c5070 | Death Knight |
+| c5080 | Bloodfiend |
+| c5081 | Chief Bloodfiend |
+| c5090 | Gravebird |
+| c5110 | Maris' Tendril |
+| c5160 | Fire Knight |
+| c5190 | Spider Scorpion |
+| c5192 | Spider Scorpion (Large) |
+| c5193 | Spider Scorpion (Small) |
+| c5210 | Divine Beast Dancing Lion |
+| c5240 | Shadow Hornsent |
+| c5241 | Shadow Hornsent (Large) |
+| c5250 | Horned Warrior/Divine Warrior |
+| c5310 | Inquisitor (Base) |
+| c5311 | Inquisitor |
+| c5312 | Elder Inquisitor |
+| c5320 | Fat Inquisitor |
+| c5522 | Shadow Stray (Large) |
+| c5523 | Shadow Stray |
+| c5750 | Living Jar |
+| c5751 | Living Jar (Small) |
+| c5810 | Demi-Human Swordmaster |
+| c5820 | Great Red Bear |
+| c5830 | Messmer Soldier |
+| c5860 | Ghostflame Dragon |
+| c5870 | Lion-head Imp/Bigmouth Imp |
+| c5900 | Man-fly |
+| c6000 | Bone/Dummy Polygons for Spirit Hawk |
+| c6001 | Eagle |
+| c6060 | Ram |
+| c6240 | Lightning Ball |
+| c7000 | Fallen Hawks Soldier |
+| c7100 | Ancient Hero of Zamor |
+| c7500 | Tricephalos / Gladius, Beast of Night |
+| c7510 | Gaping Jaw / Adel, Baron of Night |
+| c7511 | Gaping Jaw / Adel, Baron of Night (Everdark) |
+| c7520 | Sentient Pest / Gnoster, Wisdom of Night |
+| c7521 | Sentient Pest / Animus, Ascendant Light (Everdark) |
+| c7530 | Sentient Pest / Faurtis Stoneshield |
+| c7540 | Augur / Maris, Fathom of Night |
+| c7541 | Augur / Maris, Fathom of Night (Everdark) |
+| c7560 | Equilibrious Beast / Libra, Creature of Night |
+| c7561 | Equilibrious Beast / Libra, Creature of Night (Everdark) |
+| c7570 | Scale-Bearing Merchant (Libra) |
+| c7580 | Night Aspect / Heolstor the Nightlord |
+| c7600 | Darkdrift Knight / Fulghor, Champion of Nightglow |
+| c7610 | Dreglord / Straghess |
+| c7620 | Balancers / Weapon-Bequeathed Harmonia |
+| c7650 | Dreg Corpse |
+| c7651 | Large Dreg Corpse |
+| c7660 | Dreg Wormface |
+| c7700 | Gaping Dragon |
+| c7710 | Centipede Demon |
+| c7711 | Centipede Demon Arm |
+| c7712 | Centipede Demon Tail |
+| c7720 | Knight Artorias |
+| c7800 | Duke's Dear Freja |
+| c7810 | Freja Spiderling |
+| c7820 | Smelter Demon |
+| c7900 | Nameless King |
+| c7910 | King of the Storm (Nameless King) |
+| c7920 | Dancer of the Boreal Valley |
+| c7930 | Demon Prince/Demon in Pain/Demon from Below |
+| c7931 | Demon Prince Helper |
+| c7932 | Demon Prince Helper |
+| c8000 | Torrent |
+| c8100 | Ballista |
+| c8130 | Training Post (Small) |
+| c8131 | Training Post (Medium) |
+| c8132 | Training Post (Large) |
+| c8910 | The Killer (Revenant Remembrance) |
+| c8911 | Sitting Nightlord Corpse |

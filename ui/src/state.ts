@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { BINDINGS, Binding, SETTINGS, SettingValue, encodeBinding, encodeSetting, LOG_NOTIFICATION, CAMERA_STATE, SETTING_CHANGED, GameState } from "./protocol";
+import { BINDINGS, Binding, SETTINGS, SettingValue, encodeBinding, encodeSetting, encodePlayAnimation, encodeFloating, encodeInvincible, encodeEnemiesPassive, encodeSetFlag, encodeGetFlag, encodeLift, LOG_NOTIFICATION, CAMERA_STATE, SETTING_CHANGED, GameState } from "./protocol";
 
 const STORAGE_KEY = "crittercam.v1";
 
@@ -125,7 +125,11 @@ export function useCrittercam() {
     BINDINGS.forEach((b) => send(encodeBinding(b.id, bindings[b.id])));
   };
 
+  const studio = { play: (eventName: string) => send(encodePlayAnimation(eventName)), float: (on: boolean) => send(encodeFloating(on)), invincible: (on: boolean) => send(encodeInvincible(on)), enemiesPassive: (on: boolean) => send(encodeEnemiesPassive(on)), lift: (m: number) => send(encodeLift(m)) };
+
+  const flags = { set: (flag: number, on: boolean) => send(encodeSetFlag(flag, on)), get: (flag: number) => send(encodeGetFlag(flag)) };
+
   const inject = () => invoke("inject").then(() => addLog(4, "Camera injected, waiting for it to connect..."));
 
-  return { ...saved, status, log, toasts, game, update, installUpdate: () => invoke("install_update"), setSetting, setBinding, resetBindings, inject, clearLog: () => setLog([]) };
+  return { ...saved, status, log, toasts, game, update, studio, flags, installUpdate: () => invoke("install_update"), setSetting, setBinding, resetBindings, inject, clearLog: () => setLog([]) };
 }

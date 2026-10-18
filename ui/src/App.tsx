@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { CameraIcon, MapTrifoldIcon, PathIcon, KeyboardIcon, TerminalIcon, MinusIcon, XIcon, SunIcon, MoonIcon, DesktopIcon } from "@phosphor-icons/react";
+import { CameraIcon, MapTrifoldIcon, PersonSimpleIcon, SwordIcon, PathIcon, KeyboardIcon, TerminalIcon, MinusIcon, XIcon, SunIcon, MoonIcon, DesktopIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,13 +12,17 @@ import { useTheme, Theme } from "./theme";
 import { BINDINGS, Binding, FloatSetting, LOG_DEBUG, LOG_ERROR, LOG_NOTIFICATION, S, SETTINGS } from "./protocol";
 import { ChoiceRow, KeyCapture, Keys, SliderRow, SpeedNotification, SwitchRow } from "./controls";
 import { GamePage } from "./game";
+import { StudioPage } from "./studio";
+import { FightPage } from "./fight";
 
-type Page = "camera" | "game" | "dolly" | "keys" | "log";
+type Page = "camera" | "game" | "studio" | "fight" | "dolly" | "keys" | "log";
 type App = ReturnType<typeof useCrittercam>;
 
 const PAGES: { id: Page; label: string; icon: typeof CameraIcon }[] = [
   { id: "camera", label: "camera", icon: CameraIcon },
   { id: "game", label: "in game", icon: MapTrifoldIcon },
+  { id: "studio", label: "studio", icon: PersonSimpleIcon },
+  { id: "fight", label: "fight", icon: SwordIcon },
   { id: "dolly", label: "dolly", icon: PathIcon },
   { id: "keys", label: "keys", icon: KeyboardIcon },
   { id: "log", label: "log", icon: TerminalIcon },
@@ -70,6 +74,18 @@ export default function App() {
           <>
             <PageHeader title="in game" sub="live from the camera, about 10 times a second." />
             <GamePage game={app.game} connected={app.status.connected} />
+          </>
+        )}
+        {page === "studio" && (
+          <>
+            <PageHeader title="studio" sub="gestures and floating for your own character. pair with a reshade depth key for greenscreen." />
+            <StudioPage studio={app.studio} connected={app.status.connected} />
+          </>
+        )}
+        {page === "fight" && (
+          <>
+            <PageHeader title="fight" sub="start any boss fight from the boss arena mod." />
+            <FightPage flags={app.flags} connected={app.status.connected} />
           </>
         )}
         {page === "dolly" && <DollyPage app={app} />}

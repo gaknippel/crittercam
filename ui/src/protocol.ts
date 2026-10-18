@@ -2,6 +2,82 @@
 
 const MESSAGE_SETTING = 1;
 const MESSAGE_KEYBINDING = 2;
+const MESSAGE_ACTION = 7; // [7, ActionMessageType, payload...], see ActionMessageType in CameraDll/Defaults.h
+
+export const encodePlayAnimation = (eventName: string) => [MESSAGE_ACTION, 2, ...new TextEncoder().encode(eventName)];
+export const encodeFloating = (on: boolean) => [MESSAGE_ACTION, 3, on ? 1 : 0];
+export const encodeInvincible = (on: boolean) => [MESSAGE_ACTION, 5, on ? 1 : 0];
+export const encodeEnemiesPassive = (on: boolean) => [MESSAGE_ACTION, 6, on ? 1 : 0]; // enemies kept on your team: they ignore you
+const u32 = (n: number) => Array.from(new Uint8Array(new Uint32Array([n]).buffer));
+export const encodeSetFlag = (flag: number, on: boolean) => [MESSAGE_ACTION, 7, ...u32(flag), on ? 1 : 0];
+export const encodeGetFlag = (flag: number) => [MESSAGE_ACTION, 8, ...u32(flag)]; // answered with a notification
+
+// the behavior event that drops any gesture (looping ones too) back to standing
+export const IDLE_EVENT = "W_Idle";
+export function encodeLift(meters: number): number[] {
+  const payload = new DataView(new ArrayBuffer(4));
+  payload.setFloat32(0, meters, true);
+  return [MESSAGE_ACTION, 4, ...new Uint8Array(payload.buffer)];
+}
+
+// Nightreign's GestureParam (read from memory 2026-10-18): animation id = W_Event<id>, name = the param row name.
+export const GESTURES: [number, string][] = [
+  [80000, "bow"],
+  [80010, "polite bow"],
+  [80020, "my thanks"],
+  [80030, "curtsy"],
+  [80040, "reverential bow"],
+  [80050, "my lord"],
+  [80060, "warm welcome"],
+  [80070, "wave"],
+  [80080, "casual greeting"],
+  [80090, "strength!"],
+  [80100, "as you wish"],
+  [80200, "point forwards"],
+  [80210, "point upwards"],
+  [80220, "point downwards"],
+  [80230, "beckon"],
+  [80240, "wait!"],
+  [80250, "calm down!"],
+  [80300, "nod in thought"],
+  [80400, "extreme repentance"],
+  [80410, "grovel for mercy"],
+  [80500, "rallying cry"],
+  [80510, "heartening cry"],
+  [80520, "by my sword"],
+  [80530, "hoslow's oath"],
+  [80540, "fire spur me"],
+  [80600, "bravo!"],
+  [80700, "jump for joy"],
+  [80710, "triumphant delight"],
+  [80720, "fancy spin"],
+  [80730, "finger snap"],
+  [80800, "dejection"],
+  [80900, "patches' crouch"],
+  [80910, "crossed legs"],
+  [80920, "rest"],
+  [80930, "sitting sideways"],
+  [80940, "dozing cross-legged"],
+  [80950, "spread out"],
+  [80970, "balled up"],
+  [80980, "what do you want?"],
+  [81000, "prayer"],
+  [81010, "desperate prayer"],
+  [81020, "rapture"],
+  [81030, "erudition"],
+  [81040, "outer order"],
+  [81050, "inner order"],
+  [81060, "golden order totality"],
+  [81300, "prattling pate \"hello\""],
+  [81310, "prattling pate \"thank you\""],
+  [81320, "prattling pate \"apologies\""],
+  [81330, "prattling pate \"wonderful\""],
+  [81340, "prattling pate \"please help\""],
+  [81350, "prattling pate \"my beloved\""],
+  [81360, "prattling pate \"let's get to it\""],
+  [81370, "prattling pate \"you're beautiful\""],
+  [81400, "it's raining!"],
+];
 
 export const LOG_NOTIFICATION = 3;
 export const LOG_NORMAL = 4;

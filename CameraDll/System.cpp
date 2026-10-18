@@ -17,6 +17,7 @@
 #include "NamedPipeManager.h"
 #include "MessageHandler.h"
 #include "PathOverlay.h"
+#include "Studio.h"
 #include <timeapi.h>
 #include <algorithm>
 
@@ -89,6 +90,7 @@ namespace IGCS
 			CameraManipulator::updateCameraDataInGameData(_camera);
 		}
 		updateGameSpeed();
+		Studio::update();
 		// path overlay: while flying the free cam, hidden during playback and with the HUD (so one key gives a clean frame).
 		const bool showPath = g_cameraEnabled && !_cameraPath.isPlaying() && _cameraPath.nodeCount() > 0 && Globals::instance().hudVisible();
 		if (showPath)
@@ -204,13 +206,16 @@ namespace IGCS
 			snprintf(number, sizeof(number), ",\"me\":[%.2f,%.2f,%.2f],\"chrs\":[", position[0], position[1], position[2]);
 			json += number;
 			bool first = true;
-			for (int i = 0; i < MAX_CHARACTERS; i++)
+			uintptr_t begin = 0, end = 0;
+			readPointer(worldChrMan + WORLD_CHR_MAN_CHARACTERS_BEGIN_OFFSET, &begin);
+			readPointer(worldChrMan + WORLD_CHR_MAN_CHARACTERS_END_OFFSET, &end);
+			const int count = end > begin ? (std::min)(static_cast<int>((end - begin) / sizeof(uintptr_t)), MAX_CHARACTERS) : 0;
+			for (int i = 0; i < count; i++)
 			{
 				uintptr_t chr = 0, vtable = 0;
-				if (!readPointer(worldChrMan + WORLD_CHR_MAN_CHARACTERS_OFFSET + i * sizeof(uintptr_t), &chr) || 0 == chr
-					|| !readCharacter(chr, imageStart, imageEnd, position, &hp, &vtable))
+				if (!readPointer(begin + i * sizeof(uintptr_t), &chr) || 0 == chr || !readCharacter(chr, imageStart, imageEnd, position, &hp, &vtable))
 				{
-					break;
+					continue;
 				}
 				if (chr == me || hp <= 0)
 				{
@@ -609,6 +614,10 @@ namespace IGCS
 		{
 			_worldChrManPointer = Utils::calculateAbsoluteAddress(_aobBlocks[WORLD_CHR_MAN_LOCATION_KEY], 4);
 		}
+		Studio::initialize(_worldChrManPointer, _aobBlocks[PLAY_ANIMATION_KEY]->locationInImage());
+		AOBBlock* flagMan = _aobBlocks[EVENT_FLAG_MAN_LOCATION_KEY];
+		Studio::initializeEventFlags(nullptr == flagMan->locationInImage() ? nullptr : Utils::calculateAbsoluteAddress(flagMan, 4),
+									 _aobBlocks[GET_EVENT_FLAG_KEY]->locationInImage(), _aobBlocks[SET_EVENT_FLAG_KEY]->locationInImage());
 
 		// camera struct found, init our own camera object now and hook into game code which uses camera.
 		_cameraStructFound = true;
@@ -673,7 +682,7 @@ namespace IGCS
 		const auto now = std::chrono::steady_clock::now();
 		const float seconds = std::chrono::duration<float>(now - _lastSpeedUpdate).count();
 		_lastSpeedUpdate = now;
-		const float target = Globals::instance().gamePaused() ? 0.0f : Globals::instance().settings().gameSpeed;
+		const float target = Globals::instance().gamePaused() ? GAME_SPEED_PAUSED : Globals::instance().settings().gameSpeed;
 		float next = target;
 		if (!Globals::instance().gamePaused() && _appliedGameSpeed > 0.0f && GAME_SPEED_EASE_SECONDS > 0.0f)
 		{
@@ -724,13 +733,13 @@ namespace IGCS
 	void System::toggleGamePause(bool displayNotification)
 	{
 		bool gamePaused = Globals::instance().toggleGamePaused();
-		if (!CameraManipulator::setGameSpeed(gamePaused ? 0.0f : Globals::instance().settings().gameSpeed))
+		if (!CameraManipulator::setGameSpeed(gamePaused ? GAME_SPEED_PAUSED : Globals::instance().settings().gameSpeed))
 		{
 			Globals::instance().toggleGamePaused();		// didn't work, flip our state back
 			MessageHandler::addNotification("Pause isn't available right now");
 			return;
 		}
-		_appliedGameSpeed = gamePaused ? 0.0f : Globals::instance().settings().gameSpeed;
+		_appliedGameSpeed = gamePaused ? GAME_SPEED_PAUSED : Globals::instance().settings().gameSpeed;
 		if (displayNotification)
 		{
 			MessageHandler::addNotification(gamePaused ? "Game paused" : "Game unpaused");

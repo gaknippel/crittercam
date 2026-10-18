@@ -37,7 +37,6 @@ crittercam app ──settings/keys/actions (pipe)──▶ system loop: free cam
 
 ## updates
 
-![the app updating itself](docs/media/critterDownloaderDemo.webp)
 
 the installed app checks this repo's private github releases on start and offers to update itself.
 

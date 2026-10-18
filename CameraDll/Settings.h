@@ -26,6 +26,7 @@ namespace IGCS
 		int cameraControlDevice;		// 0==keyboard/mouse, 1 == gamepad, 2 == both, see Defaults.h
 		float dollySegmentSeconds;		// seconds the dolly takes from one node to the next
 		bool dollyLoop;					// loop the dolly path (last node flows back into the first)
+		float gameSpeed;				// 1.0 = normal. The game eases toward it, see System::updateGameSpeed
 
 		void setValueFromMessage(uint8_t payload[], DWORD payloadLength)
 		{
@@ -66,6 +67,9 @@ namespace IGCS
 			case SettingType::DollyLoop:
 				dollyLoop = payload[2] == (uint8_t)1 ? true : false;
 				break;
+			case SettingType::GameSpeed:
+				gameSpeed = std::clamp(Utils::floatFromBytes(payload, payloadLength, 2), GAME_SPEED_MIN, GAME_SPEED_MAX);
+				break;
 			default:
 				// nothing
 				break;
@@ -85,6 +89,7 @@ namespace IGCS
 			cameraControlDevice = DEVICE_ID_ALL;
 			dollySegmentSeconds = DEFAULT_DOLLY_SEGMENT_SECONDS;
 			dollyLoop = false;
+			gameSpeed = 1.0f;
 		}
 	};
 }

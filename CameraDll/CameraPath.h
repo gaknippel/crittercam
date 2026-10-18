@@ -17,6 +17,7 @@ namespace IGCS
 		bool deleteLastNode();
 		void clear();
 		int nodeCount() const { return static_cast<int>(_nodes.size()); }
+		float nodeFoV(int index) const { return _nodes[index].fov; }
 
 		// Starts playback from the first node. Needs at least 2 nodes.
 		bool startPlayback();

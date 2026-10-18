@@ -72,16 +72,11 @@ pub fn has_dll_loaded(pid: u32) -> bool {
     }
 }
 
-// shortcut: looks next to the exe, then in the repo's Visual Studio output (bin\x64\Release) above it. Bundle the dll as a resource if this ever ships.
+// The repo's Visual Studio output (bin\x64\Release) above the exe wins, so dev and repo builds always inject the freshest dll.
+// Installed copies have no repo above them and use the dll the installer put next to the exe.
 pub fn find_dll() -> Option<PathBuf> {
     let exe = std::env::current_exe().ok()?;
     let mut dir = exe.parent();
-    if let Some(d) = dir {
-        let beside = d.join(DLL_NAME);
-        if beside.is_file() {
-            return Some(beside);
-        }
-    }
     while let Some(d) = dir {
         let built = d.join("bin").join("x64").join("Release").join(DLL_NAME);
         if built.is_file() {
@@ -89,7 +84,8 @@ pub fn find_dll() -> Option<PathBuf> {
         }
         dir = d.parent();
     }
-    None
+    let beside = exe.parent()?.join(DLL_NAME);
+    beside.is_file().then_some(beside)
 }
 
 pub fn inject(pid: u32, dll: &Path) -> Result<(), String> {

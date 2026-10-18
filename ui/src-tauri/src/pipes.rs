@@ -15,7 +15,7 @@ use windows_sys::Win32::System::Pipes::{ConnectNamedPipe, CreateNamedPipeW, PIPE
 
 const DLL_TO_CLIENT: &str = r"\\.\pipe\IgcsDllToClient";
 const CLIENT_TO_DLL: &str = r"\\.\pipe\IgcsClientToDll";
-const BUFFER_SIZE: u32 = 4 * 1024;
+const BUFFER_SIZE: u32 = 64 * 1024; // must match IGCS_MAX_MESSAGE_SIZE in CameraDll/Defaults.h
 
 #[derive(Default)]
 pub struct Link {

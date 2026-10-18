@@ -32,6 +32,6 @@ namespace IGCS::GameSpecific::CameraManipulator
 	// Game speed / pause via the time dilation struct.
 	void setTimeDilationPointerAddress(LPBYTE address);
 	// Returns false if pausing isn't possible right now.
-	bool setTimeStopValue(bool pauseGame);
-	void reassertTimeStop();
+	// Sets the game's speed multiplier (0 = paused, 1 = normal). False when the time dilation struct isn't there (loading screen).
+	bool setGameSpeed(float speed);
 }

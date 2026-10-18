@@ -91,11 +91,11 @@ namespace IGCS
 			return;
 		}
 
-		uint8_t payload[IGCS_MAX_MESSAGE_SIZE];
-		payload[0] = uint8_t(typeOfMessage);
-		strncpy_s((char*)(&payload[1]), IGCS_MAX_MESSAGE_SIZE-2, messageText.c_str(), messageText.length());
+		// [type, text...], cut at the client's buffer size (strncpy_s used to crash the game on longer messages).
+		std::string payload(1, char(typeOfMessage));
+		payload.append(messageText, 0, IGCS_MAX_MESSAGE_SIZE - 1);
 		DWORD numberOfBytesWritten;
-		WriteFile(_dllToClientPipe, payload, messageText.length() + 1, &numberOfBytesWritten, nullptr);
+		WriteFile(_dllToClientPipe, payload.data(), static_cast<DWORD>(payload.size()), &numberOfBytesWritten, nullptr);
 	}
 
 	

@@ -53,6 +53,13 @@ namespace NightreignAOB
     constexpr const char* INVISIBILITY = "74 0B 48 8B 01 F3 0F 10 4E ?? FF 50 ?? 48 8D 8F";
 
     // ---------------------------------------------------------------------------------
+    // WORLD CHR MAN  (found 2026-10-17 via RTTI: .?AVWorldChrManImp@CS@@, .?AVPlayerIns@CS@@, .?AVEnemyIns@CS@@; ER patterns don't match)
+    // mov rax,[global] ; test rax,rax ; je ; mov rcx,[rax+174E8]. 29 matches, all the same global (RVA 0x3C0F0A8). NR RVA: 0x1F058F
+    //   WorldChrMan +0x174E8 local PlayerIns*, +0x17E60 ChrIns* array (players then enemies, ends at the first non-character)
+    //   ChrIns +0x1B8 module bag: +0x0 CSChrDataModule (hp int at +0x140), +0x68 CSChrPhysicsModule (quat +0x60, position +0x70)
+    constexpr const char* WORLD_CHR_MAN = "48 8B 05 | ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B 88 E8 74 01 00";
+
+    // ---------------------------------------------------------------------------------
     // NOT PORTED YET (no match in NR; not needed for free cam / dolly / pause)
     //   PLAYER_COORDINATES_INTERCEPT   - needed only for player-relative camera paths
     //   RESOLUTION_STRUCT_LOCATION     - hotsampling

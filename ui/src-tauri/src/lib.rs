@@ -1,5 +1,6 @@
 mod game;
 mod pipes;
+mod update;
 
 use pipes::Link;
 use serde::Serialize;
@@ -41,16 +42,28 @@ fn send(message: Vec<u8>, link: State<Link>) -> Result<(), String> {
     pipes::send(&link, &message)
 }
 
+#[tauri::command]
+async fn check_update(app: tauri::AppHandle, pending: State<'_, update::Pending>) -> Result<Option<update::UpdateInfo>, String> {
+    update::check(&app, &pending).await
+}
+
+#[tauri::command]
+async fn install_update(app: tauri::AppHandle, pending: State<'_, update::Pending>) -> Result<(), String> {
+    update::install(&app, &pending).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(Link::default())
+        .manage(update::Pending::default())
         .setup(|app| {
             let handle = app.handle().clone();
             std::thread::spawn(move || pipes::serve(handle));
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![status, inject, send])
+        .invoke_handler(tauri::generate_handler![status, inject, send, check_update, install_update])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

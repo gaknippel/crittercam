@@ -36,7 +36,8 @@ namespace IGCS
 	#define FRAME_SLEEP								1		// in milliseconds. Fast loop so the camera updates every rendered frame; movement is scaled by real elapsed time.
 	#define SPEED_REFERENCE_SECONDS					0.008f	// speed settings are 'per 8ms tick' (the old loop rate), keyboard/gamepad input is scaled to that
 	#define IGCS_SUPPORT_RAWKEYBOARDINPUT			true	// if set to false, raw keyboard input is ignored.
-	#define IGCS_MAX_MESSAGE_SIZE					4*1024	// in bytes
+	#define STATE_SEND_INTERVAL_MS					100		// camera snapshot for the client's in game tab
+	#define IGCS_MAX_MESSAGE_SIZE					64*1024	// in bytes. Must match BUFFER_SIZE in ui/src-tauri/src/pipes.rs
 
 	// Keyboard system control
 	#define IGCS_KEY_CAMERA_ENABLE					VK_INSERT
@@ -96,6 +97,7 @@ namespace IGCS
 		FoVZoomSpeed = 7,
 		DollySegmentSeconds = 8,
 		DollyLoop = 9,
+		GameSpeed = 10,
 		
 		// add more here
 	};
@@ -110,6 +112,8 @@ namespace IGCS
 		ErrorTextMessage = 5,
 		DebugTextMessage= 6,
 		Action = 7,
+		SettingChanged = 9,	// "id=value": a setting changed from inside the game (shift + wheel game speed), so the client can update and save it
+		CameraState = 8,	// JSON snapshot of the camera and dolly path for the client's in game tab
 	};
 
 	enum class ActionMessageType : uint8_t

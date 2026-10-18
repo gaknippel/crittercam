@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { BINDINGS, Binding, SETTINGS, SettingValue, encodeBinding, encodeSetting, LOG_NOTIFICATION } from "./protocol";
+import { BINDINGS, Binding, SETTINGS, SettingValue, encodeBinding, encodeSetting, LOG_NOTIFICATION, CAMERA_STATE, SETTING_CHANGED, GameState } from "./protocol";
 
 const STORAGE_KEY = "crittercam.v1";
 
@@ -33,6 +33,8 @@ export function useCrittercam() {
   const [status, setStatus] = useState<Status>({ game_running: false, injected: false, connected: false, pipe_blocked: false });
   const [log, setLog] = useState<LogLine[]>([]);
   const [toasts, setToasts] = useState<LogLine[]>([]);
+  const [game, setGame] = useState<GameState | null>(null);
+  const [update, setUpdate] = useState<{ version: string; notes?: string } | null>(null);
   const savedRef = useRef(saved);
   savedRef.current = saved;
   const seq = useRef(0);
@@ -51,13 +53,22 @@ export function useCrittercam() {
     BINDINGS.forEach((b) => send(encodeBinding(b.id, bindings[b.id])));
   }, []);
 
+  const toast = useCallback((line: LogLine) => {
+    setToasts((t) => [...t.slice(-3), line]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.seq !== line.seq)), 2800);
+  }, []);
+
   const addLog = useCallback((kind: number, text: string) => {
     const line = { kind, text, time: new Date().toLocaleTimeString([], { hour12: false }), seq: seq.current++ };
     setLog((l) => [...l.slice(-499), line]);
-    if (kind === LOG_NOTIFICATION) {
-      setToasts((t) => [...t.slice(-3), line]);
-      setTimeout(() => setToasts((t) => t.filter((x) => x.seq !== line.seq)), 2800);
-    }
+    if (kind === LOG_NOTIFICATION) toast(line);
+  }, [toast]);
+
+  // the dll already applied it; just remember it (the sidebar speed bar follows)
+  const settingFromGame = useCallback((text: string) => {
+    const [id, value] = text.split("=").map(Number);
+    if (!SETTINGS[id] || !Number.isFinite(value)) return;
+    setSaved((s) => ({ ...s, settings: { ...s.settings, [id]: value } }));
   }, []);
 
   useEffect(() => {
@@ -70,19 +81,33 @@ export function useCrittercam() {
     const unlisten = [
       listen<boolean>("link", (e) => {
         setStatus((s) => ({ ...s, connected: e.payload, injected: e.payload || s.injected }));
+        if (!e.payload) setGame(null);
         if (e.payload) {
           pushAll();
           addLog(4, "Connected to the camera, settings sent.");
         }
       }),
-      listen<{ kind: number; text: string }>("log", (e) => addLog(e.payload.kind, e.payload.text)),
+      listen<{ kind: number; text: string }>("log", (e) => {
+        if (e.payload.kind === SETTING_CHANGED) return settingFromGame(e.payload.text);
+        if (e.payload.kind !== CAMERA_STATE) return addLog(e.payload.kind, e.payload.text);
+        try {
+          setGame(JSON.parse(e.payload.text));
+        } catch {
+          // a cut-off snapshot (huge path): keep showing the last good one
+        }
+      }),
     ];
     return () => {
       alive = false;
       clearInterval(timer);
       unlisten.forEach((u) => u.then((f) => f()));
     };
-  }, [pushAll, addLog]);
+  }, [pushAll, addLog, settingFromGame]);
+
+  // installed builds check the private github releases once at startup; dev builds have no token and get null
+  useEffect(() => {
+    invoke<{ version: string; notes?: string } | null>("check_update").then(setUpdate).catch((e) => addLog(5, `update check failed: ${e}`));
+  }, [addLog]);
 
   const setSetting = (id: number, value: SettingValue) => {
     setSaved((s) => ({ ...s, settings: { ...s.settings, [id]: value } }));
@@ -102,5 +127,5 @@ export function useCrittercam() {
 
   const inject = () => invoke("inject").then(() => addLog(4, "Camera injected, waiting for it to connect..."));
 
-  return { ...saved, status, log, toasts, setSetting, setBinding, resetBindings, inject, clearLog: () => setLog([]) };
+  return { ...saved, status, log, toasts, game, update, installUpdate: () => invoke("install_update"), setSetting, setBinding, resetBindings, inject, clearLog: () => setLog([]) };
 }

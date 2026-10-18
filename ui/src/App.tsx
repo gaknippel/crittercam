@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { CameraIcon, PathIcon, KeyboardIcon, TerminalIcon, MinusIcon, XIcon, SunIcon, MoonIcon, DesktopIcon } from "@phosphor-icons/react";
+import { CameraIcon, MapTrifoldIcon, PathIcon, KeyboardIcon, TerminalIcon, MinusIcon, XIcon, SunIcon, MoonIcon, DesktopIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,13 +10,15 @@ import nightreignIcon from "./assets/nightreign.png";
 import { useCrittercam, Status } from "./state";
 import { useTheme, Theme } from "./theme";
 import { BINDINGS, Binding, FloatSetting, LOG_DEBUG, LOG_ERROR, LOG_NOTIFICATION, S, SETTINGS } from "./protocol";
-import { ChoiceRow, KeyCapture, Keys, SliderRow, SwitchRow } from "./controls";
+import { ChoiceRow, KeyCapture, Keys, SliderRow, SpeedNotification, SwitchRow } from "./controls";
+import { GamePage } from "./game";
 
-type Page = "camera" | "dolly" | "keys" | "log";
+type Page = "camera" | "game" | "dolly" | "keys" | "log";
 type App = ReturnType<typeof useCrittercam>;
 
 const PAGES: { id: Page; label: string; icon: typeof CameraIcon }[] = [
   { id: "camera", label: "camera", icon: CameraIcon },
+  { id: "game", label: "in game", icon: MapTrifoldIcon },
   { id: "dolly", label: "dolly", icon: PathIcon },
   { id: "keys", label: "keys", icon: KeyboardIcon },
   { id: "log", label: "log", icon: TerminalIcon },
@@ -27,6 +29,9 @@ export default function App() {
   const [theme, setTheme] = useTheme();
   const [page, setPage] = useState<Page>("camera");
   const errors = app.log.filter((l) => l.kind === LOG_ERROR).length;
+  // the speed the game is really running at (from the dll's snapshots), rounded so tiny easing steps don't count as changes
+  const liveSpeed = app.game?.speed !== undefined && !app.game.paused ? Math.round(app.game.speed * 100) / 100 : undefined;
+  const speedDef = SETTINGS[S.gameSpeed] as FloatSetting;
 
   return (
     <div className="grid h-screen grid-cols-[232px_1fr] grid-rows-[36px_1fr] bg-background text-foreground">
@@ -40,6 +45,7 @@ export default function App() {
           </div>
         </div>
         <StatusCard status={app.status} inject={app.inject} />
+        {app.update && <UpdateCard version={app.update.version} gameHasDll={app.status.injected} install={app.installUpdate} />}
         <nav className="flex flex-col gap-0.5">
           {PAGES.map(({ id, label, icon: Icon }) => (
             <Button key={id} variant={page === id ? "secondary" : "ghost"} className="justify-start gap-3" onClick={() => setPage(id)} aria-current={page === id ? "page" : undefined}>
@@ -55,15 +61,22 @@ export default function App() {
             <ToggleGroupItem value="dark" className="flex-1" aria-label="dark"><MoonIcon /></ToggleGroupItem>
             <ToggleGroupItem value="system" className="flex-1" aria-label="system"><DesktopIcon /></ToggleGroupItem>
           </ToggleGroup>
-          <div className="px-1 text-[11px] text-muted-foreground">built on igcs by otis_inf</div>
+          <div className="px-1 text-[11px] text-muted-foreground">built on igcs</div>
         </div>
       </aside>
       <main className="min-h-0 overflow-y-auto p-6">
         {page === "camera" && <CameraPage app={app} />}
+        {page === "game" && (
+          <>
+            <PageHeader title="in game" sub="live from the camera, about 10 times a second." />
+            <GamePage game={app.game} connected={app.status.connected} />
+          </>
+        )}
         {page === "dolly" && <DollyPage app={app} />}
         {page === "keys" && <KeysPage app={app} />}
         {page === "log" && <LogPage app={app} />}
       </main>
+      <SpeedNotification def={speedDef} speed={liveSpeed} />
       <div className="pointer-events-none fixed right-5 bottom-5 flex flex-col items-end gap-2" aria-live="polite">
         {app.toasts.map((t) => (
           <div key={t.seq} className="border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md">{t.text}</div>
@@ -123,6 +136,30 @@ function StatusCard({ status, inject }: { status: Status; inject: () => Promise<
   );
 }
 
+function UpdateCard({ version, gameHasDll, install }: { version: string; gameHasDll: boolean; install: () => Promise<unknown> }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const run = () => {
+    setBusy(true);
+    setError("");
+    install().catch((e) => {
+      setError(String(e));
+      setBusy(false);
+    });
+  };
+  return (
+    <div className="flex flex-col gap-3 border p-3">
+      <div>
+        <div className="text-sm font-medium">update {version}</div>
+        {/* the game keeps crittercam.dll open, so the installer can't replace it while the game runs */}
+        <div className="text-xs text-muted-foreground">{gameHasDll ? "close the game first" : "installs and restarts the app"}</div>
+      </div>
+      <Button variant="outline" disabled={gameHasDll || busy} onClick={run}>{busy ? "updating…" : "install update"}</Button>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+    </div>
+  );
+}
+
 function PageHeader({ title, sub, children }: { title: string; sub: string; children?: React.ReactNode }) {
   return (
     <div className="mb-5 flex items-end justify-between gap-4">
@@ -159,7 +196,7 @@ function CameraPage({ app }: { app: App }) {
   const device = SETTINGS[S.controlDevice];
   return (
     <>
-      <PageHeader title="camera" sub="how the free cam moves. changes apply live." />
+      <PageHeader title="camera" sub="how the free cam moves! changes apply live" />
       <Section title="control">
         <ChoiceRow label={device.label} hint={device.hint} options={device.kind === "choice" ? device.options : []} value={app.settings[S.controlDevice] as number} onChange={(v) => app.setSetting(S.controlDevice, v)} />
         <SwitchFor app={app} id={S.invertY} />
@@ -173,6 +210,14 @@ function CameraPage({ app }: { app: App }) {
       </Section>
       <Section title="lens">
         <SliderFor app={app} id={S.fovSpeed} />
+      </Section>
+      <Section title="time">
+        <SliderFor app={app} id={S.gameSpeed} />
+        <div className="flex gap-2 py-3">
+          {[0.1, 0.25, 0.5, 1, 2].map((v) => (
+            <Button key={v} size="sm" variant={app.settings[S.gameSpeed] === v ? "secondary" : "outline"} onClick={() => app.setSetting(S.gameSpeed, v)}>{v}×</Button>
+          ))}
+        </div>
       </Section>
     </>
   );
@@ -190,7 +235,7 @@ function DollyPage({ app }: { app: App }) {
   ];
   return (
     <>
-      <PageHeader title="dolly" sub="place keyframes with the free cam, then play them back as one smooth move." />
+      <PageHeader title="dolly" sub="place keyframes with the free cam, then play them back in a motion" />
       <Section title="playback">
         <SliderFor app={app} id={S.dollySeconds} />
         <SwitchFor app={app} id={S.dollyLoop} />
@@ -250,14 +295,14 @@ function LogPage({ app }: { app: App }) {
   const color = (k: number) => (k === LOG_ERROR ? "text-destructive" : k === LOG_DEBUG ? "text-muted-foreground" : k === LOG_NOTIFICATION ? "text-primary font-medium" : "");
   return (
     <>
-      <PageHeader title="log" sub="messages from the camera inside the game, newest first.">
+      <PageHeader title="log" sub="messages from the camera inside the game">
         <div className="flex gap-2">
           <Button variant={debug ? "secondary" : "outline"} onClick={() => setDebug(!debug)} aria-pressed={debug}>debug</Button>
           <Button variant="outline" onClick={app.clearLog}>clear</Button>
         </div>
       </PageHeader>
       <Card className="py-2 select-text">
-        {lines.length === 0 && <p className="px-4 py-2 text-sm text-muted-foreground">nothing yet. inject the camera to see what it's doing.</p>}
+        {lines.length === 0 && <p className="px-4 py-2 text-sm text-muted-foreground">nothing yet! inject the camera to see what it's doing</p>}
         {[...lines].reverse().map((l) => (
           <div key={l.seq} className="flex gap-4 px-4 py-0.5 text-xs hover:bg-muted/50">
             <time className="shrink-0 text-muted-foreground">{l.time}</time>

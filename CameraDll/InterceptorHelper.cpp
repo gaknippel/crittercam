@@ -44,6 +44,8 @@ namespace IGCS::GameSpecific::InterceptorHelper
 		aobBlocks[TIME_DILATION_LOCATION_KEY] = new AOBBlock(TIME_DILATION_LOCATION_KEY, "48 8B 05 | ?? ?? ?? ?? F3 0F 10 88 ?? ?? ?? ?? F3 0F 59 88 ?? ?? ?? ?? 48 8D", 1);
 		// 32 byte copy function used by Otis_Inf's HUD toggle in Elden Ring. Identical in Nightreign. RVA 0x12C5C60.
 		aobBlocks[HUD_OPACITY_READ_INTERCEPT_KEY] = new AOBBlock(HUD_OPACITY_READ_INTERCEPT_KEY, "41 0F 28 00 48 8B C2 41 0F 28 48 ?? 0F 29 02 0F 29 4A", 1);
+		// mov rax,[WorldChrMan] ; test rax,rax ; je ; mov rcx,[rax+174E8] (the local player). 29 matches, all the same global. RVA 0x1F058F.
+		aobBlocks[WORLD_CHR_MAN_LOCATION_KEY] = new AOBBlock(WORLD_CHR_MAN_LOCATION_KEY, "48 8B 05 | ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B 88 E8 74 01 00", 1);
 
 		map<string, AOBBlock*>::iterator it;
 		bool result = true;

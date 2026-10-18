@@ -34,8 +34,7 @@ extern "C" {
 namespace IGCS::GameSpecific::CameraManipulator
 {
 	static LPBYTE _timeDilationPointerAddress = nullptr;	// address of the global pointer to the time dilation struct
-	static int _pausedFloatOffset = -1;						// which float we zeroed to pause, -1 if not paused
-	static float _valueBeforePause = 1.0f;
+	static int _speedFloatOffset = -1;						// which time dilation float is the game speed, -1 until first used
 
 
 	bool isCameraFound()
@@ -224,64 +223,34 @@ namespace IGCS::GameSpecific::CameraManipulator
 	}
 
 
-	bool setTimeStopValue(bool pauseGame)
+	// The game multiplies two floats each frame: the game speed (normally exactly 1.0) and the frame delta. Returns the speed one.
+	static float* getGameSpeedFloat()
 	{
-		if (pauseGame)
+		float* float1 = getTimeDilationFloat(TIME_DILATION_FLOAT1_OFFSET);
+		float* float2 = getTimeDilationFloat(TIME_DILATION_FLOAT2_OFFSET);
+		if (nullptr == float1 || nullptr == float2)
 		{
-			float* float1 = getTimeDilationFloat(TIME_DILATION_FLOAT1_OFFSET);
-			float* float2 = getTimeDilationFloat(TIME_DILATION_FLOAT2_OFFSET);
-			if (nullptr == float1 || nullptr == float2)
-			{
-				MessageHandler::addNotification("Pause isn't available right now");
-				return false;
-			}
-			// The game multiplies these two each frame: one is the game speed (normally exactly 1.0), the other the frame delta.
-			// Zero the game speed one.
-			float value1 = *float1;
-			float value2 = *float2;
-			if (value1 == 1.0f || (value2 != 1.0f && fabsf(value1 - 1.0f) <= fabsf(value2 - 1.0f)))
-			{
-				_pausedFloatOffset = TIME_DILATION_FLOAT1_OFFSET;
-				_valueBeforePause = value1;
-				*float1 = 0.0f;
-			}
-			else
-			{
-				_pausedFloatOffset = TIME_DILATION_FLOAT2_OFFSET;
-				_valueBeforePause = value2;
-				*float2 = 0.0f;
-			}
-			MessageHandler::logDebug("Pause: +0x%X was %f, +0x%X was %f. Zeroed +0x%X.", TIME_DILATION_FLOAT1_OFFSET, value1,
-									 TIME_DILATION_FLOAT2_OFFSET, value2, _pausedFloatOffset);
+			return nullptr;
 		}
-		else
+		if (_speedFloatOffset < 0)
 		{
-			if (_pausedFloatOffset < 0)
-			{
-				return true;
-			}
-			float* pausedFloat = getTimeDilationFloat(_pausedFloatOffset);
-			if (nullptr != pausedFloat)
-			{
-				*pausedFloat = _valueBeforePause > 0.0f ? _valueBeforePause : 1.0f;
-			}
-			_pausedFloatOffset = -1;
+			// decided once, the first time it's needed: the speed float is the one at (or closest to) 1.0
+			_speedFloatOffset = fabsf(*float1 - 1.0f) <= fabsf(*float2 - 1.0f) ? TIME_DILATION_FLOAT1_OFFSET : TIME_DILATION_FLOAT2_OFFSET;
+			MessageHandler::logLine("Game speed: +0x%X was %f, +0x%X was %f. Using +0x%X.", TIME_DILATION_FLOAT1_OFFSET, *float1,
+									TIME_DILATION_FLOAT2_OFFSET, *float2, _speedFloatOffset);
 		}
-		return true;
+		return getTimeDilationFloat(_speedFloatOffset);
 	}
 
 
-	// Called every frame while paused, in case the game writes the value back.
-	void reassertTimeStop()
+	bool setGameSpeed(float speed)
 	{
-		if (_pausedFloatOffset < 0)
+		float* speedFloat = getGameSpeedFloat();
+		if (nullptr == speedFloat)
 		{
-			return;
+			return false;
 		}
-		float* pausedFloat = getTimeDilationFloat(_pausedFloatOffset);
-		if (nullptr != pausedFloat)
-		{
-			*pausedFloat = 0.0f;
-		}
+		*speedFloat = speed;
+		return true;
 	}
 }

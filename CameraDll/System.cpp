@@ -24,6 +24,8 @@
 
 using namespace DirectX;
 
+extern "C" LPBYTE g_cameraOverrideBuffer;
+
 namespace IGCS
 {
 	using namespace IGCS::GameSpecific;
@@ -86,10 +88,7 @@ namespace IGCS
 		{
 			CameraManipulator::updateCameraDataInGameData(_camera);
 		}
-		if (Globals::instance().gamePaused())
-		{
-			CameraManipulator::reassertTimeStop();
-		}
+		updateGameSpeed();
 		// path overlay: while flying the free cam, hidden during playback and with the HUD (so one key gives a clean frame).
 		const bool showPath = g_cameraEnabled && !_cameraPath.isPlaying() && _cameraPath.nodeCount() > 0 && Globals::instance().hudVisible();
 		if (showPath)
@@ -98,6 +97,133 @@ namespace IGCS
 			PathOverlay::update(_pathCurve, _pathNodes, _pathAims);
 		}
 		PathOverlay::setVisible(showPath);
+		if (GetTickCount64() >= _nextStateSend)
+		{
+			_nextStateSend = GetTickCount64() + STATE_SEND_INTERVAL_MS;
+			sendCameraState();
+		}
+	}
+
+
+	// Reads one character. Characters get freed under us (loading screens, deaths), so every read is guarded: a bad pointer just skips it.
+	// The vtable must point into the game's image, which filters out the floats that follow the character array.
+	static bool readCharacter(uintptr_t chr, uintptr_t imageStart, uintptr_t imageEnd, float* position, int* hp, uintptr_t* vtable)
+	{
+		__try
+		{
+			const uintptr_t vt = *reinterpret_cast<uintptr_t*>(chr);
+			if (vt < imageStart || vt >= imageEnd)
+			{
+				return false;
+			}
+			const uintptr_t modules = *reinterpret_cast<uintptr_t*>(chr + CHR_MODULES_OFFSET);
+			const uintptr_t data = *reinterpret_cast<uintptr_t*>(modules + CHR_DATA_MODULE_OFFSET);
+			const uintptr_t physics = *reinterpret_cast<uintptr_t*>(modules + CHR_PHYSICS_MODULE_OFFSET);
+			memcpy(position, reinterpret_cast<void*>(physics + CHR_POSITION_OFFSET), 3 * sizeof(float));
+			*hp = *reinterpret_cast<int*>(data + CHR_HP_OFFSET);
+			*vtable = vt;
+			return true;
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+			return false;
+		}
+	}
+
+
+	static bool readPointer(uintptr_t address, uintptr_t* value)
+	{
+		__try
+		{
+			*value = *reinterpret_cast<uintptr_t*>(address);
+			return true;
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+			return false;
+		}
+	}
+
+
+	// JSON snapshot for the client's "in game" tab: the rendered camera (only while ours is on), the dolly nodes and the curve.
+	void System::sendCameraState()
+	{
+		char number[160];
+		std::string json;
+		snprintf(number, sizeof(number), "{\"on\":%d,\"paused\":%d,\"playing\":%d,\"hud\":%d,\"loop\":%d,\"speed\":%.3f,\"cam\":",
+				 g_cameraEnabled ? 1 : 0, Globals::instance().gamePaused() ? 1 : 0, _cameraPath.isPlaying() ? 1 : 0,
+				 Globals::instance().hudVisible() ? 1 : 0, Globals::instance().settings().dollyLoop ? 1 : 0, _appliedGameSpeed);
+		json += number;
+		if (g_cameraEnabled)
+		{
+			// the buffer the game renders from, so this is also right during dolly playback.
+			const float* m = reinterpret_cast<const float*>(g_cameraOverrideBuffer + CAMERA_MATRIX_IN_STRUCT_OFFSET);
+			const float fov = *reinterpret_cast<const float*>(g_cameraOverrideBuffer + FOV_IN_STRUCT_OFFSET);
+			snprintf(number, sizeof(number), "[%.2f,%.2f,%.2f,%.1f,%.1f,%.1f,%.1f]", m[12], m[13], m[14],
+					 XMConvertToDegrees(atan2f(m[8], m[10])), XMConvertToDegrees(asinf(std::clamp(-m[9], -1.0f, 1.0f))),
+					 XMConvertToDegrees(atan2f(m[1], m[5])), XMConvertToDegrees(fov));
+			json += number;
+		}
+		else
+		{
+			json += "null";
+		}
+		_cameraPath.sampleForDisplay(_pathCurve, _pathNodes, _pathAims);
+		json += ",\"nodes\":[";
+		for (size_t i = 0; i < _pathNodes.size(); i++)
+		{
+			const XMFLOAT3& p = _pathNodes[i];
+			const XMFLOAT3 f(_pathAims[i].x - p.x, _pathAims[i].y - p.y, _pathAims[i].z - p.z);	// aim is 1m along the view direction
+			snprintf(number, sizeof(number), "%s[%.2f,%.2f,%.2f,%.1f,%.1f,%.1f]", i ? "," : "", p.x, p.y, p.z,
+					 XMConvertToDegrees(atan2f(f.x, f.z)), XMConvertToDegrees(asinf(std::clamp(-f.y, -1.0f, 1.0f))), XMConvertToDegrees(_cameraPath.nodeFoV(static_cast<int>(i))));
+			json += number;
+		}
+		json += "],\"curve\":[";
+		// every 3rd sample is plenty for a small map, and keeps the message well under the pipe's 64KB.
+		for (size_t i = 0; i < _pathCurve.size(); i += 3)
+		{
+			snprintf(number, sizeof(number), "%s[%.2f,%.2f,%.2f]", i ? "," : "", _pathCurve[i].x, _pathCurve[i].y, _pathCurve[i].z);
+			json += number;
+		}
+		if (!_pathCurve.empty())
+		{
+			const XMFLOAT3& last = _pathCurve.back();
+			snprintf(number, sizeof(number), ",[%.2f,%.2f,%.2f]", last.x, last.y, last.z);
+			json += number;
+		}
+		json += "]";
+		// characters: "me":[x,y,z] (the local player), "chrs":[[x,y,z,isPlayer],...] (everyone else alive)
+		uintptr_t worldChrMan = 0, me = 0;
+		const uintptr_t imageStart = reinterpret_cast<uintptr_t>(_hostImageAddress), imageEnd = imageStart + _hostImageSize;
+		float position[3];
+		int hp;
+		uintptr_t meVtable = 0;
+		if (nullptr != _worldChrManPointer && readPointer(reinterpret_cast<uintptr_t>(_worldChrManPointer), &worldChrMan) && 0 != worldChrMan
+			&& readPointer(worldChrMan + WORLD_CHR_MAN_MAIN_PLAYER_OFFSET, &me) && 0 != me && readCharacter(me, imageStart, imageEnd, position, &hp, &meVtable))
+		{
+			snprintf(number, sizeof(number), ",\"me\":[%.2f,%.2f,%.2f],\"chrs\":[", position[0], position[1], position[2]);
+			json += number;
+			bool first = true;
+			for (int i = 0; i < MAX_CHARACTERS; i++)
+			{
+				uintptr_t chr = 0, vtable = 0;
+				if (!readPointer(worldChrMan + WORLD_CHR_MAN_CHARACTERS_OFFSET + i * sizeof(uintptr_t), &chr) || 0 == chr
+					|| !readCharacter(chr, imageStart, imageEnd, position, &hp, &vtable))
+				{
+					break;
+				}
+				if (chr == me || hp <= 0)
+				{
+					continue;
+				}
+				snprintf(number, sizeof(number), "%s[%.2f,%.2f,%.2f,%d]", first ? "" : ",", position[0], position[1], position[2], vtable == meVtable ? 1 : 0);
+				json += number;
+				first = false;
+			}
+			json += "]";
+		}
+		json += "}";
+		NamedPipeManager::instance().writeTextPayload(json, MessageType::CameraState);
 	}
 
 
@@ -159,6 +285,7 @@ namespace IGCS
 			handleSkipFrames();
 			applyHammerPrevention();
 		}
+		handleGameSpeedWheel();
 
 		if (!g_cameraEnabled)
 		{
@@ -478,6 +605,10 @@ namespace IGCS
 		GameSpecific::InterceptorHelper::setCameraStructInterceptorHook(_aobBlocks);
 		waitForCameraStructAddresses();		// blocks till camera is found.
 		GameSpecific::InterceptorHelper::setPostCameraStructHooks(_aobBlocks);
+		if (nullptr != _aobBlocks[WORLD_CHR_MAN_LOCATION_KEY]->locationInImage())
+		{
+			_worldChrManPointer = Utils::calculateAbsoluteAddress(_aobBlocks[WORLD_CHR_MAN_LOCATION_KEY], 4);
+		}
 
 		// camera struct found, init our own camera object now and hook into game code which uses camera.
 		_cameraStructFound = true;
@@ -535,14 +666,71 @@ namespace IGCS
 	}
 
 
+	// Pause wins (instant, so frame skipping works). Otherwise ease toward the speed setting so speed changes look smooth on video.
+	// Only writes while the speed isn't normal (and once more to restore 1.0), so the game's own speed effects aren't overridden.
+	void System::updateGameSpeed()
+	{
+		const auto now = std::chrono::steady_clock::now();
+		const float seconds = std::chrono::duration<float>(now - _lastSpeedUpdate).count();
+		_lastSpeedUpdate = now;
+		const float target = Globals::instance().gamePaused() ? 0.0f : Globals::instance().settings().gameSpeed;
+		float next = target;
+		if (!Globals::instance().gamePaused() && _appliedGameSpeed > 0.0f && GAME_SPEED_EASE_SECONDS > 0.0f)
+		{
+			next = _appliedGameSpeed + (target - _appliedGameSpeed) * (std::min)(1.0f, seconds / GAME_SPEED_EASE_SECONDS);
+			if (fabsf(next - target) < 0.002f)
+			{
+				next = target;
+			}
+		}
+		if (next == 1.0f && _appliedGameSpeed == 1.0f)
+		{
+			return;
+		}
+		if (CameraManipulator::setGameSpeed(next))
+		{
+			_appliedGameSpeed = next;
+		}
+	}
+
+
+	// shift + mouse wheel changes the game speed, camera on or off. The client hears about it and updates its slider.
+	void System::handleGameSpeedWheel()
+	{
+		const short wheel = Input::getMouseWheelDelta();
+		if (0 == wheel)
+		{
+			return;
+		}
+		if (Utils::shiftPressed())
+		{
+			Settings& settings = Globals::instance().settings();
+			float speed = std::clamp(settings.gameSpeed * powf(GAME_SPEED_WHEEL_STEP, wheel), GAME_SPEED_WHEEL_MIN, GAME_SPEED_MAX);
+			if (fabsf(speed - 1.0f) < 0.03f)
+			{
+				speed = 1.0f;		// land exactly on normal speed when scrolling past it
+			}
+			settings.gameSpeed = speed;
+			NamedPipeManager::instance().writeTextPayload(Utils::formatString("%d=%.3f", static_cast<int>(SettingType::GameSpeed), speed), MessageType::SettingChanged);
+		}
+		if (Utils::shiftPressed() || !g_cameraEnabled)
+		{
+			// consumed: shift + wheel shouldn't also zoom, and with the camera off nothing else reads the wheel, so don't let it pile up.
+			Input::resetMouseDeltas();
+		}
+	}
+
+
 	void System::toggleGamePause(bool displayNotification)
 	{
 		bool gamePaused = Globals::instance().toggleGamePaused();
-		if (!CameraManipulator::setTimeStopValue(gamePaused))
+		if (!CameraManipulator::setGameSpeed(gamePaused ? 0.0f : Globals::instance().settings().gameSpeed))
 		{
 			Globals::instance().toggleGamePaused();		// didn't work, flip our state back
+			MessageHandler::addNotification("Pause isn't available right now");
 			return;
 		}
+		_appliedGameSpeed = gamePaused ? 0.0f : Globals::instance().settings().gameSpeed;
 		if (displayNotification)
 		{
 			MessageHandler::addNotification(gamePaused ? "Game paused" : "Game unpaused");

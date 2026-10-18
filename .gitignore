@@ -28,3 +28,6 @@ packages/
 # Client settings written at runtime
 IGCSClientSettings.ini
 IGCSClientRecentlyUsed.txt
+
+# Updater: read-only GitHub token baked into release builds (never commit)
+ui/src-tauri/update-token.txt

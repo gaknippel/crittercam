@@ -36,12 +36,28 @@ namespace IGCS::GameSpecific
 	#define FOV_CHANGE_SCALE							0.01f
 	#define FOV_MIN										0.01f
 	#define FOV_MAX										3.0f
+	#define GAME_SPEED_MIN								0.01f
+	#define GAME_SPEED_MAX								4.0f
+	#define GAME_SPEED_WHEEL_STEP						1.15f	// shift + one wheel notch multiplies/divides the game speed by this
+	#define GAME_SPEED_WHEEL_MIN						0.05f	// same lower end as the client's slider
+	#define GAME_SPEED_EASE_SECONDS						0.25f	// how fast the game eases to a new speed (0 = instant)
 	#define PITCH_LIMIT									1.55f	// radians (~89 degrees)
 
 	// AOB Keys for interceptor's AOB scanner
 	#define CAMERA_ADDRESS_INTERCEPT_KEY				"AOB_CAMERA_ADDRESS_INTERCEPT"
 	#define TIME_DILATION_LOCATION_KEY					"AOB_TIME_DILATION_LOCATION"
 	#define HUD_OPACITY_READ_INTERCEPT_KEY				"AOB_HUD_OPACITY_READ_INTERCEPT"
+	#define WORLD_CHR_MAN_LOCATION_KEY					"AOB_WORLD_CHR_MAN_LOCATION"
+
+	// Characters (found with RTTI on 2026-10-17, see docs/NightreignAOBs.h). WorldChrMan is CS::WorldChrManImp.
+	#define WORLD_CHR_MAN_MAIN_PLAYER_OFFSET			0x174E8		// PlayerIns* of the local player
+	#define WORLD_CHR_MAN_CHARACTERS_OFFSET				0x17E60		// ChrIns* array: players, then enemies. Ends at the first non-character
+	#define MAX_CHARACTERS								256
+	#define CHR_MODULES_OFFSET							0x1B8		// ChrIns -> module bag
+	#define CHR_DATA_MODULE_OFFSET						0x0			// bag -> CSChrDataModule
+	#define CHR_PHYSICS_MODULE_OFFSET					0x68		// bag -> CSChrPhysicsModule
+	#define CHR_HP_OFFSET								0x140		// CSChrDataModule -> current hp (int)
+	#define CHR_POSITION_OFFSET							0x70		// CSChrPhysicsModule -> x, y, z (floats)
 
 	// Camera struct layout. Same as Elden Ring. The game copies a source camera into the render camera:
 	//   +0x10 .. +0x4F  4x4 matrix: row 0 = right, row 1 = up, row 2 = forward, row 3 = position (w = 1)

@@ -1,12 +1,11 @@
 # crittercam
 
-Free camera, dolly paths, pause, and HUD toggle for **ELDEN RING NIGHTREIGN** (PC). Personal use only.
+free cam, dolly paths, pause, timescale, and HUD toggle, real time cam data, for **ELDEN RING NIGHTREIGN** (PC). 
 
-Built on [Injectable Generic Camera System (IGCS)](https://github.com/FransBouma/InjectableGenericCameraSystem) by Frans "Otis_Inf" Bouma (BSD-2, see `LICENSE-IGCS.txt`). Uses [MinHook](https://github.com/TsudaKageyu/minhook). The byte patterns were ported from Otis_Inf's Elden Ring Camera Tools, so **don't publish this repo or the DLL**.
 
-> Offline only. Run the game with EAC disabled (`steam_appid.txt` in the `Game` folder, start `nightreign.exe` directly). Never use this online.
+> OFFLINE ONLY!! run the game with EAC disabled (`steam_appid.txt` in the `Game` folder, start `nightreign.exe` directly). never use this online.
 
-## How it works
+## how it works
 
 ```
 nightreign.exe                       crittercam.dll (injected)
@@ -24,21 +23,27 @@ crittercam client ──settings/keys (pipe)──▶ System loop: free cam / do
 - **HUD:** *experimental.* Zeroes the 32 byte value Otis's Elden Ring tool hooks for HUD opacity.
 - **Dolly:** keyframes you place with the free cam. Played back with a Catmull-Rom spline (position, FoV) and quaternion squad (rotation), with ease-in/out.
 
-## Build
+## build
 
-1. Open `crittercam.sln` in Visual Studio 2022 (needs the *Desktop development with C++* workload).
-2. Set the toolbar to **Release** / **x64**.
-3. **Build → Build Solution** (Ctrl+Shift+B). NuGet restores the client's packages automatically the first time.
-4. Output: `bin\x64\Release\crittercam.dll`.
-5. Client (Tauri): `cd ui`, `npm install` once, then `npm run tauri dev` to run it, or `npm run release` to build `ui\src-tauri\target\release\crittercam.exe`.
+1. open `crittercam.sln` in Visual Studio 2022 (needs the *Desktop development with C++* workload).
+2. set the toolbar to **Release** / **x64**.
+3. **build → build solution** . NuGet restores the client's packages automatically the first time.
+4. output: `bin\x64\Release\crittercam.dll`.
+5. client (tauri): `cd ui`, `npm install` once, then `npm run tauri dev` to run it, or `npm run release` to build `ui\src-tauri\target\release\crittercam.exe`.
 
-## Use
+## updates
 
-1. Start Nightreign offline (EAC disabled) and load in.
-2. Run the crittercam client (see Build) and click **Inject camera**. Keep it open, it's where settings and keys live. Close the old `IGCSClient.exe` first: both can't run at once.
-3. Press **Insert** to enable the camera.
 
-| Key | Action |
+ship a version: `.\ship.ps1 0.2.0 "what changed"` (game closed). It builds the dll and the installer, signs it, and creates release `v0.2.0` with the installer and `latest.json`. commit the version bump afterwards.
+
+
+## use
+
+1. start nightreign offline (EAC disabled) and load in.
+2. run the crittercam client and click **inject camera**. keep it open, it's where settings and keys live.
+3. press **insert** to enable the camera.
+
+| key | action |
 |---|---|
 | Insert | Camera on / off |
 | W / S / A / D | Move forward / back / left / right |
@@ -49,6 +54,7 @@ crittercam client ──settings/keys (pipe)──▶ System loop: free cam / do
 | Alt / Ctrl (hold) | Faster / slower |
 | Pause | Pause / unpause |
 | End | Skip a few frames while paused |
+| Shift + mouse wheel | Game speed slower / faster (eased; the client shows it) |
 | Delete | HUD toggle (experimental), also hides the dolly path |
 | Backspace | Block game input (on by default while the camera is on) |
 | Scroll Lock | Lock camera movement |
@@ -58,25 +64,18 @@ crittercam client ──settings/keys (pipe)──▶ System loop: free cam / do
 | **F8** | Dolly: clear path |
 | **F9** | Cycle camera target (see below) |
 
-While the free cam is on, the dolly path is drawn over the game: orange curve, numbered nodes, cyan line = where each node looks. Needs **Borderless windowed** (or Windowed) display mode.
+while the free cam is on, the dolly path is drawn over the game: orange curve, numbered nodes, cyan line = where each node looks. Needs **borderless windowed** (or windowed) display mode.
 
-Dolly timing (seconds per node) and looping are on the client's Dolly page. All keys can be rebound in the client.
+dolly timing (seconds per node) and looping are on the client's dolly page. all keys can be rebound in the client.
 
-**Dolly workflow:** pause (Pause), enable camera, fly to a spot, F5, fly to the next spot, F5 … then F6.
+**dolly instructions:** pause (pause), enable camera, fly to a spot, F5, fly to the next spot, F5 … then F6.
 
-## First test checklist
+## first test checklist
 
-None of this has been tested in game yet. Things to check, in order:
 
-1. **Injection.** The client's log should say `All interception offsets found.` and `Camera found.` If a pattern isn't found, a patch changed the code (see `docs/NightreignAOBs.h`).
-2. **Camera moves?** If enabling the camera freezes the view but movement does nothing, the routine writes to several cameras and we picked the wrong one. Press **F9** until it moves. The log lists every camera it saw.
-3. **Directions right?** If up/down or left/right are mirrored, the conventions are all in `Camera.cpp` (comments explain each sign).
-4. **Pause.** Pause key. The log shows which float got zeroed (`+0x2D4` or `+0x270`). If the game keeps running, swap the offsets in `GameConstants.h`.
-5. **Crash on inject or after a while?** Nightreign's code protection may detect the patched code. That's the known risk with this approach; report back what happens and when.
+## project layout
 
-## Project layout
-
-| Path | What |
+| path | what |
 |---|---|
 | `CameraDll/` | The injected DLL (C++ / MASM) |
 | `CameraDll/GameConstants.h` | Game specific offsets and keys |

@@ -41,6 +41,9 @@ namespace IGCS
 		void toggleGamePause(bool displayNotification = true);
 		void handleSkipFrames();
 		void applyHammerPrevention();
+		void sendCameraState();
+		void updateGameSpeed();
+		void handleGameSpeedWheel();
 
 		Camera _camera;
 		CameraPath _cameraPath;
@@ -50,6 +53,10 @@ namespace IGCS
 		map<string, AOBBlock*> _aobBlocks;
 		std::vector<DirectX::XMFLOAT3> _pathCurve, _pathNodes, _pathAims;	// reused buffers for the path overlay
 		std::chrono::steady_clock::time_point _lastInputTime = std::chrono::steady_clock::now();
+		LPBYTE _worldChrManPointer = nullptr;		// address of the game's global WorldChrMan pointer, nullptr if the pattern wasn't found
+		ULONGLONG _nextStateSend = 0;
+		float _appliedGameSpeed = 1.0f;		// what we last wrote into the game, eases toward the setting
+		std::chrono::steady_clock::time_point _lastSpeedUpdate = std::chrono::steady_clock::now();
 		ULONGLONG _ignoreKeysUntil = 0;		// key repeat prevention without blocking the loop (a blocking sleep would stutter dolly playback)
 		std::filesystem::path _hostExePath;
 		std::filesystem::path _hostExeFilename;

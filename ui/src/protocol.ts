@@ -7,6 +7,12 @@ export const LOG_NOTIFICATION = 3;
 export const LOG_NORMAL = 4;
 export const LOG_ERROR = 5;
 export const LOG_DEBUG = 6;
+export const SETTING_CHANGED = 9; // "id=value" from the dll: a setting changed in game (shift + wheel game speed)
+export const CAMERA_STATE = 8; // json snapshot from the dll, see System::sendCameraState
+
+// cam: [x, y, z, yaw, pitch, roll, fov] (meters, degrees), null while our camera is off. nodes: [x, y, z, yaw, pitch, fov].
+// me: the local player [x, y, z]; chrs: everyone else alive [x, y, z, isPlayer]. Both missing when the character list isn't readable.
+export type GameState = { on: number; paused: number; playing: number; hud: number; loop: number; speed?: number; cam: number[] | null; nodes: number[][]; curve: number[][]; me?: number[]; chrs?: number[][] };
 
 export type FloatSetting = {
   kind: "float"; id: number; label: string; hint: string;
@@ -19,7 +25,7 @@ export type SettingValue = number | boolean;
 
 export const S = {
   fastMultiplier: 0, slowMultiplier: 1, upMultiplier: 2, movementSpeed: 3, controlDevice: 4,
-  rotationSpeed: 5, invertY: 6, fovSpeed: 7, dollySeconds: 8, dollyLoop: 9,
+  rotationSpeed: 5, invertY: 6, fovSpeed: 7, dollySeconds: 8, dollyLoop: 9, gameSpeed: 10,
 } as const;
 
 export const SETTINGS: Record<number, SettingDef> = {
@@ -32,6 +38,7 @@ export const SETTINGS: Record<number, SettingDef> = {
   [S.controlDevice]: { kind: "choice", id: S.controlDevice, label: "camera control", hint: "the other device keeps playing the character", options: ["keyboard & mouse", "controller", "both"], fallback: 2 },
   [S.invertY]: { kind: "bool", id: S.invertY, label: "invert look up / down", hint: "", fallback: false },
   [S.dollySeconds]: { kind: "float", id: S.dollySeconds, label: "seconds per node", hint: "time between two keyframes", min: 0.1, max: 60, decimals: 1, log: true, fallback: 3 },
+  [S.gameSpeed]: { kind: "float", id: S.gameSpeed, label: "game speed", hint: "or hold shift + scroll in game", min: 0.05, max: 4, decimals: 2, log: true, fallback: 1 },
   [S.dollyLoop]: { kind: "bool", id: S.dollyLoop, label: "loop path", hint: "fly from the last node back to the first", fallback: false },
 };
 

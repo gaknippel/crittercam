@@ -2,6 +2,8 @@
 
 free cam, dolly paths, pause, timescale, and HUD toggle, real time cam data, for **ELDEN RING NIGHTREIGN** (PC). 
 
+![free cam showcase](docs/media/wyldercam.webp)
+
 
 > OFFLINE ONLY!! run the game with EAC disabled (`steam_appid.txt` in the `Game` folder, start `nightreign.exe` directly). never use this online.
 
@@ -38,6 +40,8 @@ ship a version: `.\ship.ps1 0.2.0 "what changed"` (game closed). It builds the d
 
 ## use
 
+![free cam following a walk](docs/media/dutchessWalk.webp)
+
 1. start nightreign offline (EAC disabled) and load in.
 2. run the crittercam client and click **inject camera**. keep it open, it's where settings and keys live.
 3. press **insert** to enable the camera.
@@ -64,6 +68,16 @@ ship a version: `.\ship.ps1 0.2.0 "what changed"` (game closed). It builds the d
 | **F9** | Cycle camera target (see below) |
 
 while the free cam is on, the dolly path is drawn over the game: orange curve, numbered nodes, cyan line = where each node looks. Needs **borderless windowed** (or windowed) display mode.
+
+![dolly path and nodes drawn over the game](docs/media/campathDemo.webp)
+
+**game speed:** hold shift and scroll in game (or use the slider on the camera page). the app pops up a speed meter while it changes.
+
+![game speed meter in the app](docs/media/speedControl.webp)
+
+**in game tab:** live camera position, angles and fov, your dolly nodes, and a top-down map of the path, you, players and enemies.
+
+![in game tab with live camera data](docs/media/ingamecamDemo.webp)
 
 dolly timing (seconds per node) and looping are on the client's dolly page. all keys can be rebound in the client.
 

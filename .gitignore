@@ -31,3 +31,7 @@ IGCSClientRecentlyUsed.txt
 
 # Updater: read-only GitHub token baked into release builds (never commit)
 ui/src-tauri/update-token.txt
+
+# raw screen recordings (GBs). the README uses the small loops in docs/media
+public/*.mov
+public/*.mp4

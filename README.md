@@ -18,10 +18,9 @@ nightreign.exe                       crittercam.dll (injected)
 crittercam client ──settings/keys (pipe)──▶ System loop: free cam / dolly playback
 ```
 
-- **Camera:** the game copies one of several source cameras into the render camera every frame. We hook that copy, and when the camera is on, point it at our own camera struct (matrix at `+0x10`, FoV at `+0x50`).
-- **Pause:** zeroes the game speed in the time dilation struct (the code checks which of the two floats is the speed).
-- **HUD:** *experimental.* Zeroes the 32 byte value Otis's Elden Ring tool hooks for HUD opacity.
-- **Dolly:** keyframes you place with the free cam. Played back with a Catmull-Rom spline (position, FoV) and quaternion squad (rotation), with ease-in/out.
+- **camera:** the game copies one of several source cameras into the render camera every frame. We hook that copy, and when the camera is on, point it at our own camera struct (matrix at `+0x10`, FoV at `+0x50`).
+- **pause:** zeroes the game speed in the time dilation struct (the code checks which of the two floats is the speed).
+- **dolly:** keyframes you place with the free cam. played back with a catmull-rom spline (position, FoV) and quaternion squad (rotation), with ease-in/out.
 
 ## build
 

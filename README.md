@@ -1,6 +1,6 @@
 # crittercam
 
-free cam, dolly paths, pause, game speed, hud toggle, live cam data, a gesture studio and a boss fight picker for **elden ring nightreign** (pc).
+free cam, dolly paths, pause, game speed, hud toggle, live cam data, a gesture studio and a boss fight picker for **ELDEN RING NIGHTREIGN** (pc).
 
 ![free cam showcase](docs/media/wyldercam.webp)
 

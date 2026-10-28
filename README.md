@@ -6,7 +6,6 @@ free cam, dolly paths, pause, game speed, hud toggle, live cam data, a gesture s
 
 
 > offline only!! run the game with eac disabled (`steam_appid.txt` in the `Game` folder, start `nightreign.exe` directly). never use this online.
-```
 
 ## build
 

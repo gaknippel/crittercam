@@ -102,6 +102,7 @@ export type SettingValue = number | boolean;
 export const S = {
   fastMultiplier: 0, slowMultiplier: 1, upMultiplier: 2, movementSpeed: 3, controlDevice: 4,
   rotationSpeed: 5, invertY: 6, fovSpeed: 7, dollySeconds: 8, dollyLoop: 9, gameSpeed: 10,
+  trackPlayer: 11, trackFollow: 12, trackLag: 13, trackDolly: 14,
 } as const;
 
 export const SETTINGS: Record<number, SettingDef> = {
@@ -113,8 +114,12 @@ export const SETTINGS: Record<number, SettingDef> = {
   [S.fovSpeed]: { kind: "float", id: S.fovSpeed, label: "zoom speed", hint: "keys and mouse wheel", min: 0.01, max: 1, decimals: 2, fallback: 0.3 },
   [S.controlDevice]: { kind: "choice", id: S.controlDevice, label: "camera control", hint: "the other device keeps playing the character", options: ["keyboard & mouse", "controller", "both"], fallback: 2 },
   [S.invertY]: { kind: "bool", id: S.invertY, label: "invert look up / down", hint: "", fallback: false },
-  [S.dollySeconds]: { kind: "float", id: S.dollySeconds, label: "seconds per node", hint: "time between two keyframes", min: 0.1, max: 60, decimals: 1, log: true, fallback: 3 },
+  [S.dollySeconds]: { kind: "float", id: S.dollySeconds, label: "seconds per node", hint: "time between two keyframes, or hold ctrl + scroll in game", min: 0.1, max: 60, decimals: 1, log: true, fallback: 3 },
   [S.gameSpeed]: { kind: "float", id: S.gameSpeed, label: "game speed", hint: "or hold shift + scroll in game", min: 0.05, max: 4, decimals: 2, log: true, fallback: 1 },
+  [S.trackPlayer]: { kind: "bool", id: S.trackPlayer, label: "track me", hint: "the free cam keeps you in frame, lazily. or press t in game", fallback: false },
+  [S.trackFollow]: { kind: "bool", id: S.trackFollow, label: "follow me", hint: "also moves along with you, keeping its distance", fallback: false },
+  [S.trackDolly]: { kind: "bool", id: S.trackDolly, label: "track during dolly", hint: "the path moves the camera, tracking aims it. off: the nodes' own angles", fallback: true },
+  [S.trackLag]: { kind: "float", id: S.trackLag, label: "lag", hint: "seconds it takes to catch up. higher = lazier, more cinematic", min: 0.05, max: 5, decimals: 2, log: true, fallback: 0.6 },
   [S.dollyLoop]: { kind: "bool", id: S.dollyLoop, label: "loop path", hint: "fly from the last node back to the first", fallback: false },
 };
 
@@ -127,6 +132,7 @@ export const BINDINGS: BindingDef[] = [
   { id: 5, label: "lock camera movement", group: "general", fallback: 145 },
   { id: 0, label: "block game input", group: "general", fallback: 8 },
   { id: 25, label: "cycle camera target", group: "general", fallback: 120 },
+  { id: 26, label: "track me on / off", group: "general", fallback: 84 },
   { id: 8, label: "forward", group: "move", fallback: 87 },
   { id: 9, label: "back", group: "move", fallback: 83 },
   { id: 6, label: "left", group: "move", fallback: 65 },

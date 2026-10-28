@@ -23,6 +23,10 @@ namespace IGCS::Studio
 	void initializeEventFlags(LPBYTE managerPointer, LPBYTE getEventFlag, LPBYTE setEventFlag);
 	void setEventFlag(uint32_t flagId, bool on);
 	void reportEventFlag(uint32_t flagId);
+	// turns the game's own (hidden) follow camera to this yaw, so the game moves the character relative to the free cam
+	void alignGameCameraYaw(float yaw);
+	// the local player's feet, false when there's no player (loading screen)
+	bool localPlayerPosition(float* xyz);
 	// every frame: keeps the float flag on, the game can reset it
 	void update();
 }

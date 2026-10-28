@@ -271,10 +271,16 @@ namespace IGCS::Utils
 		va_copy(args_copy, args);
 
 		int len = vsnprintf(NULL, 0, fmt, args_copy);
-		char* buffer = new char[len + 2];
-		vsnprintf(buffer, len + 1, fmt, args_copy);
-		string toReturn(buffer, len + 1);
-		return toReturn;
+		va_end(args_copy);
+		if (len < 0)
+		{
+			return string();
+		}
+		// the copy is used up by the measuring call, the original args format. No terminating 0 in the string: it used to be
+		// sent along to the client, which then couldn't parse "11=1\0" as a number.
+		vector<char> buffer(len + 1);
+		vsnprintf(buffer.data(), buffer.size(), fmt, args);
+		return string(buffer.data(), len);
 	}
 
 

@@ -51,6 +51,10 @@ namespace IGCS::GameSpecific::InterceptorHelper
 		aobBlocks[GET_EVENT_FLAG_KEY] = new AOBBlock(GET_EVENT_FLAG_KEY, "44 8B 41 1C 44 8B DA 33 D2 41 8B C3 41 F7 F0", 1);
 		aobBlocks[SET_EVENT_FLAG_KEY] = new AOBBlock(SET_EVENT_FLAG_KEY, "48 89 5C 24 08 44 8B 49 1C 44 8B D2 33 D2 41 8B C2 41 F7 F1", 1);
 		aobBlocks[WORLD_CHR_MAN_LOCATION_KEY] = new AOBBlock(WORLD_CHR_MAN_LOCATION_KEY, "48 8B 05 | ?? ?? ?? ?? 48 85 C0 74 ?? 48 8B 88 E8 74 01 00", 1);
+		// 20 byte leaf that copies a 32 byte color (2x 4 floats) for the UI. Otis_Inf's ER tools zero it for their HUD toggle.
+		// Zeroing hides every Scaleform UI element (hud, talk boxes, subtitles, menus) at render time, so it works while paused.
+		// It misses the weapon / item icons: those go with the game's HUD option. Unique. RVA 0x12C5C60.
+		aobBlocks[UI_COLOR_COPY_KEY] = new AOBBlock(UI_COLOR_COPY_KEY, "41 0F 28 00 48 8B C2 41 0F 28 48 ?? 0F 29 02 0F 29 4A ?? C3", 1);
 
 		map<string, AOBBlock*>::iterator it;
 		bool result = true;
@@ -91,16 +95,34 @@ namespace IGCS::GameSpecific::InterceptorHelper
 	}
 
 
-	// Writes the game's own "HUD: on/off" option, so it hides exactly what that setting hides (item icons included).
+	// Hides everything: the UI color copy returns zeros (all Scaleform UI, instantly, also while paused), and the game's own
+	// "HUD: on/off" option goes off for the weapon / item icons. That option fades with game time, so while paused the icons
+	// only follow once the game runs again.
 	void toggleHud(map<string, AOBBlock*>& aobBlocks, bool hudVisible)
 	{
+		AOBBlock* colorBlock = aobBlocks[UI_COLOR_COPY_KEY];
+		static uint8_t originalColorCopy[UI_COLOR_COPY_LENGTH];
+		static bool originalSaved = false;
+		if (nullptr != colorBlock->locationInImage())
+		{
+			if (!originalSaved)
+			{
+				memcpy(originalColorCopy, colorBlock->locationInImage(), UI_COLOR_COPY_LENGTH);
+				originalSaved = true;
+			}
+			// xorps xmm0,xmm0 ; mov rax,rdx ; movaps [rdx],xmm0 ; movaps [rdx+10h],xmm0 ; ret ; nops
+			uint8_t zeroColor[UI_COLOR_COPY_LENGTH] = { 0x0F, 0x57, 0xC0, 0x48, 0x8B, 0xC2, 0x0F, 0x29, 0x02, 0x0F, 0x29, 0x42, 0x10, 0xC3, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90 };
+			GameImageHooker::writeRange(colorBlock->locationInImage(), hudVisible ? originalColorCopy : zeroColor, UI_COLOR_COPY_LENGTH);
+		}
 		AOBBlock* graphicsBlock = aobBlocks[GRAPHICS_MAN_LOCATION_KEY];
 		LPBYTE graphics = nullptr == graphicsBlock->locationInImage() ? nullptr : *reinterpret_cast<LPBYTE*>(Utils::calculateAbsoluteAddress(graphicsBlock, 4));
-		if (nullptr == graphics)
+		if (nullptr != graphics)
+		{
+			graphics[HUD_OPTION_OFFSET] = hudVisible ? 1 : 0;
+		}
+		else if (nullptr == colorBlock->locationInImage())
 		{
 			MessageHandler::addNotification("HUD toggle isn't available right now");
-			return;
 		}
-		graphics[HUD_OPTION_OFFSET] = hudVisible ? 1 : 0;
 	}
 }

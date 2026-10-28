@@ -33,18 +33,20 @@ export default function App() {
   const [theme, setTheme] = useTheme();
   const [page, setPage] = useState<Page>("camera");
   const errors = app.log.filter((l) => l.kind === LOG_ERROR).length;
-  // the speed the game is really running at (from the dll's snapshots), rounded so tiny easing steps don't count as changes
-  const liveSpeed = app.game?.speed !== undefined && !app.game.paused ? Math.round(app.game.speed * 100) / 100 : undefined;
+  // the speed the game is really running at (from the dll's snapshots), rounded so tiny easing steps don't count as changes.
+  // while paused: the speed it resumes at (shift + scroll still changes it)
+  const paused = !!app.game?.paused;
+  const liveSpeed = app.game?.speed === undefined ? undefined : paused ? (app.settings[S.gameSpeed] as number) : Math.round(app.game.speed * 100) / 100;
   const speedDef = SETTINGS[S.gameSpeed] as FloatSetting;
 
   return (
     <div className="grid h-screen grid-cols-[232px_1fr] grid-rows-[36px_1fr] bg-background text-foreground">
       <TitleBar />
-      <aside className="flex min-h-0 flex-col gap-4 border-r p-3">
+      <aside className="flex min-h-0 flex-col gap-4 border-r border-r-(--bevel-lo) bg-linear-to-b from-(--bar-to)/40 to-transparent p-3 shadow-[inset_-1px_0_0_var(--bevel-hi)]">
         <div className="flex items-center gap-3 px-1 pt-1">
           <img src={nightreignIcon} alt="" className="size-9" />
           <div>
-            <div className="text-sm font-semibold">crittercam</div>
+            <div className="font-heading text-base">crittercam</div>
             <div className="text-[11px] text-muted-foreground">elden ring nightreign</div>
           </div>
         </div>
@@ -92,10 +94,10 @@ export default function App() {
         {page === "keys" && <KeysPage app={app} />}
         {page === "log" && <LogPage app={app} />}
       </main>
-      <SpeedNotification def={speedDef} speed={liveSpeed} />
+      <SpeedNotification def={speedDef} speed={liveSpeed} paused={paused} />
       <div className="pointer-events-none fixed right-5 bottom-5 flex flex-col items-end gap-2" aria-live="polite">
         {app.toasts.map((t) => (
-          <div key={t.seq} className="border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md">{t.text}</div>
+          <div key={t.seq} className="panel px-3 py-2 text-sm shadow-md">{t.text}</div>
         ))}
       </div>
     </div>
@@ -105,10 +107,10 @@ export default function App() {
 function TitleBar() {
   const win = getCurrentWindow();
   return (
-    <header className="col-span-2 flex items-center justify-between border-b pl-3 text-xs text-muted-foreground" data-tauri-drag-region>
-      <span data-tauri-drag-region>crittercam</span>
+    <header className="metal-bar col-span-2 flex items-center justify-between pl-3 text-xs text-foreground" data-tauri-drag-region>
+      <span className="font-heading" data-tauri-drag-region>crittercam</span>
       <div className="flex h-full">
-        <button className="grid h-full w-11 place-items-center hover:bg-muted" onClick={() => win.minimize()} aria-label="minimize"><MinusIcon /></button>
+        <button className="grid h-full w-11 place-items-center hover:bg-white/10" onClick={() => win.minimize()} aria-label="minimize"><MinusIcon /></button>
         <button className="grid h-full w-11 place-items-center hover:bg-destructive hover:text-white" onClick={() => win.close()} aria-label="close"><XIcon /></button>
       </div>
     </header>
@@ -134,9 +136,9 @@ function StatusCard({ status, inject }: { status: Status; inject: () => Promise<
     inject().catch((e) => setError(String(e))).finally(() => setBusy(false));
   };
   return (
-    <div className="flex flex-col gap-3 border p-3">
+    <div className="flex flex-col gap-3 rounded-md bevel-out bg-card p-3 shadow-[0_0_0_1px_var(--bevel-lo)]">
       <div className="flex items-center gap-3">
-        <span className={cn("size-2.5 shrink-0", s.dot)} />
+        <span className={cn("size-2.5 shrink-0 rounded-full shadow-[inset_0_1px_1px_#fff8,0_0_0_1px_#0008]", s.dot)} />
         <div>
           <div className="text-sm font-medium">{s.title}</div>
           <div className="text-xs text-muted-foreground">{s.sub}</div>
@@ -164,7 +166,7 @@ function UpdateCard({ version, gameHasDll, install }: { version: string; gameHas
     });
   };
   return (
-    <div className="flex flex-col gap-3 border p-3">
+    <div className="flex flex-col gap-3 rounded-md bevel-out bg-card p-3 shadow-[0_0_0_1px_var(--bevel-lo)]">
       <div>
         <div className="text-sm font-medium">update {version}</div>
         {/* the game keeps crittercam.dll open, so the installer can't replace it while the game runs */}
@@ -180,7 +182,7 @@ function PageHeader({ title, sub, children }: { title: string; sub: string; chil
   return (
     <div className="mb-5 flex items-end justify-between gap-4">
       <div>
-        <h1 className="text-lg font-semibold">{title}</h1>
+        <h1 className="font-heading text-xl">{title}</h1>
         <p className="text-sm text-muted-foreground">{sub}</p>
       </div>
       {children}
@@ -191,8 +193,8 @@ function PageHeader({ title, sub, children }: { title: string; sub: string; chil
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <Card className="mb-4 gap-0 py-0">
-      <CardHeader className="border-b py-3">
-        <CardTitle className="text-xs font-medium text-muted-foreground">{title}</CardTitle>
+      <CardHeader className="border-b py-2 [.border-b]:pb-2">
+        <CardTitle className="text-xs tracking-[0.2em] text-foreground">{title}</CardTitle>
       </CardHeader>
       <CardContent className="divide-y">{children}</CardContent>
     </Card>
@@ -223,6 +225,13 @@ function CameraPage({ app }: { app: App }) {
         <SliderFor app={app} id={S.upMultiplier} />
         <SliderFor app={app} id={S.fastMultiplier} />
         <SliderFor app={app} id={S.slowMultiplier} />
+      </Section>
+      <Section title="tracking">
+        <SwitchFor app={app} id={S.trackPlayer} />
+        <SwitchFor app={app} id={S.trackFollow} />
+        <SwitchFor app={app} id={S.trackDolly} />
+        <SliderFor app={app} id={S.trackLag} />
+        <p className="py-3 text-xs text-muted-foreground">it starts from the shot you have. look or fly around while it tracks to change the framing.</p>
       </Section>
       <Section title="lens">
         <SliderFor app={app} id={S.fovSpeed} />

@@ -1,6 +1,6 @@
 [package]
 name = "crittercam"
-version = "0.2.2"
+version = "0.3.0"
 description = "crittercam client: injects the camera dll into ELDEN RING NIGHTREIGN and sends it settings"
 edition = "2024"
 
@@ -28,6 +28,7 @@ windows-sys = { version = "0.59", features = [
   "Win32_System_LibraryLoader",
 ] }
 tauri-plugin-updater = "2"
+tauri-plugin-window-state = "2"
 serde_json = "1.0.154"
 reqwest = { version = "0.13", default-features = false, features = ["json", "rustls-no-provider"] }  # same version and features as tauri-plugin-updater uses, so nothing extra compiles
 rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }

@@ -16,6 +16,7 @@ namespace IGCS
 		void addNode(const DirectX::XMFLOAT3& position, DirectX::FXMVECTOR rotationQuaternion, float fov);
 		bool deleteLastNode();
 		void clear();
+		void shift(const DirectX::XMFLOAT3& offset);		// moves every node, for when the game re-centres its world coordinates
 		int nodeCount() const { return static_cast<int>(_nodes.size()); }
 		float nodeFoV(int index) const { return _nodes[index].fov; }
 

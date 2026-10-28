@@ -26,6 +26,7 @@
 using namespace DirectX;
 
 extern "C" LPBYTE g_cameraOverrideBuffer;
+extern "C" LPBYTE g_gameSourceCamera;
 
 namespace IGCS
 {
@@ -73,12 +74,31 @@ namespace IGCS
 	void System::updateFrame()
 	{
 		handleUserInput();
+		followWorldShift();
 		if (g_cameraEnabled && _cameraPath.isPlaying())
 		{
 			XMFLOAT3 position;
 			XMVECTOR rotation;
 			float fov;
 			bool stillPlaying = _cameraPath.evaluate(position, rotation, fov);
+			if (Globals::instance().settings().trackPlayer && Globals::instance().settings().trackDuringDolly)
+			{
+				// the dolly moves the camera, tracking aims it (so after playback it stays at the end of the path, still tracking)
+				_camera.setPosition(position);
+				if (!_trackActive)
+				{
+					// start from the path's current view, so turning tracking on mid-path doesn't snap
+					XMFLOAT3 forward;
+					XMStoreFloat3(&forward, XMMatrixRotationQuaternion(rotation).r[2]);
+					_camera.setYaw(atan2f(forward.x, forward.z));
+					_camera.setPitch(asinf(std::clamp(-forward.y, -1.0f, 1.0f)));
+				}
+				updateTracking(false);
+				if (_trackActive)
+				{
+					rotation = _camera.calculateRotationQuaternion();
+				}
+			}
 			CameraManipulator::writeCameraPose(position, rotation, fov);
 			if (!stillPlaying)
 			{
@@ -87,7 +107,13 @@ namespace IGCS
 		}
 		else
 		{
+			updateTracking(Globals::instance().settings().trackFollow);
 			CameraManipulator::updateCameraDataInGameData(_camera);
+		}
+		if (g_cameraEnabled)
+		{
+			// the game moves the character relative to its own camera: keep that one facing where we look (keyboard and pads alike)
+			Studio::alignGameCameraYaw(CameraManipulator::cameraYaw(g_cameraOverrideBuffer));
 		}
 		updateGameSpeed();
 		Studio::update();
@@ -104,6 +130,137 @@ namespace IGCS
 			_nextStateSend = GetTickCount64() + STATE_SEND_INTERVAL_MS;
 			sendCameraState();
 		}
+	}
+
+
+	// false when the camera can't be read (freed after a loading screen)
+	static bool readCameraPosition(LPBYTE camera, XMFLOAT3& position)
+	{
+		__try
+		{
+			memcpy(&position, camera + CAMERA_POSITION_IN_STRUCT_OFFSET, sizeof(XMFLOAT3));
+			return true;
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+			return false;
+		}
+	}
+
+
+	// Far from where it started, the game re-centres its world coordinates around the player (like Elden Ring's map tiles):
+	// everything jumps by the same offset in one frame, so our camera's unchanged numbers suddenly point somewhere else.
+	// The game's own camera jumps with the world, so when it jumps further than anything moves in one update, move our
+	// camera and the dolly path by the same offset.
+	void System::followWorldShift()
+	{
+		static LPBYTE lastCamera = nullptr;
+		static XMFLOAT3 last, velocity;		// velocity: how far the game camera moved last frame, so its own motion isn't counted as shift
+		LPBYTE camera = g_cameraEnabled ? g_gameSourceCamera : nullptr;
+		XMFLOAT3 now;
+		if (nullptr == camera || !readCameraPosition(camera, now))
+		{
+			lastCamera = nullptr;
+			return;
+		}
+		if (camera == lastCamera && now.x == last.x && now.y == last.y && now.z == last.z)
+		{
+			return;		// we run every ms, the game updates once a frame: only compare frames where it moved
+		}
+		if (camera != lastCamera)		// a different camera object (or none) in between isn't a shift
+		{
+			velocity = XMFLOAT3(0.0f, 0.0f, 0.0f);
+		}
+		else
+		{
+			XMFLOAT3 shift(now.x - last.x - velocity.x, now.y - last.y - velocity.y, now.z - last.z - velocity.z);
+			const float distance = sqrtf(shift.x * shift.x + shift.y * shift.y + shift.z * shift.z);
+			velocity = XMFLOAT3(now.x - last.x, now.y - last.y, now.z - last.z);
+			if (distance > WORLD_SHIFT_MIN_METERS)
+			{
+				velocity = XMFLOAT3(velocity.x - shift.x, velocity.y - shift.y, velocity.z - shift.z);
+				const XMFLOAT3 position = _camera.getPosition();
+				_camera.setPosition(XMFLOAT3(position.x + shift.x, position.y + shift.y, position.z + shift.z));
+				_cameraPath.shift(shift);
+				_trackAnchor = XMFLOAT3(_trackAnchor.x + shift.x, _trackAnchor.y + shift.y, _trackAnchor.z + shift.z);
+				MessageHandler::logLine("The game shifted its world coordinates by (%.1f, %.1f, %.1f), the camera followed", shift.x, shift.y, shift.z);
+			}
+		}
+		lastCamera = camera;
+		last = now;
+	}
+
+
+	// yaw / pitch that look from 'from' at 'to', in the camera's convention: forward = (sin(yaw)cos(pitch), -sin(pitch), cos(yaw)cos(pitch))
+	static void lookAngles(const XMFLOAT3& from, const XMFLOAT3& to, float& yaw, float& pitch)
+	{
+		const float dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z;
+		yaw = atan2f(dx, dz);
+		pitch = atan2f(-dy, sqrtf(dx * dx + dz * dz));
+	}
+
+
+	// the camera keeps its angles in 0..2pi: differences go back to -pi..pi
+	static float signedAngle(float angle)
+	{
+		angle = fmodf(angle + XM_PI, XM_2PI);
+		return (angle < 0.0f ? angle + XM_2PI : angle) - XM_PI;
+	}
+
+
+	// Tracking camera: keeps the player in frame like a camera operator, not an aimbot. The camera looks at an anchor point
+	// that chases the player's chest with an exponential lag, so quick moves get a lazy catch-up. It starts from the shot you
+	// have (an off-centre framing stays off-centre), and manual looking / flying while it tracks changes the framing / distance.
+	// With follow on, the camera also moves along, keeping its offset to the anchor. During dolly playback the path moves it instead.
+	void System::updateTracking(bool follow)
+	{
+		const Settings& settings = Globals::instance().settings();
+		float feet[3];
+		if (!g_cameraEnabled || !settings.trackPlayer || !Studio::localPlayerPosition(feet))
+		{
+			_trackActive = false;
+			return;
+		}
+		const auto now = std::chrono::steady_clock::now();
+		const XMFLOAT3 target(feet[0], feet[1] + TRACK_TARGET_HEIGHT, feet[2]);
+		XMFLOAT3 position = _camera.getPosition();
+		float yaw, pitch;
+		if (!_trackActive)
+		{
+			_trackActive = true;
+			_trackAnchor = target;
+			_trackOffset = XMFLOAT3(position.x - target.x, position.y - target.y, position.z - target.z);
+			lookAngles(position, target, yaw, pitch);
+			_trackYawOffset = signedAngle(_camera.getYaw() - yaw);
+			_trackPitchOffset = signedAngle(_camera.getPitch() - pitch);
+			_trackLastYaw = _camera.getYaw();
+			_trackLastPitch = _camera.getPitch();
+			_trackLastUpdate = now;
+			return;
+		}
+		// whatever the user turned / flew since the last update becomes part of the framing
+		_trackYawOffset = signedAngle(_trackYawOffset + _camera.getYaw() - _trackLastYaw);
+		_trackPitchOffset += signedAngle(_camera.getPitch() - _trackLastPitch);
+		if (follow)
+		{
+			_trackOffset = XMFLOAT3(position.x - _trackAnchor.x, position.y - _trackAnchor.y, position.z - _trackAnchor.z);
+		}
+		const float seconds = (std::min)(std::chrono::duration<float>(now - _trackLastUpdate).count(), 0.25f);
+		_trackLastUpdate = now;
+		const float blend = 1.0f - expf(-seconds / (std::max)(settings.trackLagSeconds, TRACK_LAG_SECONDS_MIN));
+		_trackAnchor = XMFLOAT3(_trackAnchor.x + (target.x - _trackAnchor.x) * blend, _trackAnchor.y + (target.y - _trackAnchor.y) * blend,
+								_trackAnchor.z + (target.z - _trackAnchor.z) * blend);
+		if (follow)
+		{
+			position = XMFLOAT3(_trackAnchor.x + _trackOffset.x, _trackAnchor.y + _trackOffset.y, _trackAnchor.z + _trackOffset.z);
+			_camera.setPosition(position);
+		}
+		lookAngles(position, _trackAnchor, yaw, pitch);
+		_trackPitchOffset = std::clamp(pitch + _trackPitchOffset, -PITCH_LIMIT, PITCH_LIMIT) - pitch;		// so it can't wind past straight up / down
+		_camera.setYaw(yaw + _trackYawOffset);
+		_camera.setPitch(pitch + _trackPitchOffset);
+		_trackLastYaw = _camera.getYaw();
+		_trackLastPitch = _camera.getPitch();
 	}
 
 
@@ -307,6 +464,14 @@ namespace IGCS
 			CameraManipulator::cycleCameraTarget();
 			applyHammerPrevention();
 		}
+		if (Input::isActionActivated(ActionType::TrackPlayer))
+		{
+			Settings& settings = Globals::instance().settings();
+			settings.trackPlayer = !settings.trackPlayer;
+			NamedPipeManager::instance().writeTextPayload(Utils::formatString("%d=%d", static_cast<int>(SettingType::TrackPlayer), settings.trackPlayer ? 1 : 0), MessageType::SettingChanged);
+			MessageHandler::addNotification(settings.trackPlayer ? "Tracking you" : "Tracking off");
+			applyHammerPrevention();
+		}
 		handleDollyInput();
 		if (_cameraPath.isPlaying())
 		{
@@ -336,7 +501,8 @@ namespace IGCS
 		}
 		if (Globals::instance().cameraMovementLocked())
 		{
-			// no movement allowed, simply return
+			// no movement allowed, simply return (dropping the mouse movement, or unlocking would apply it all at once)
+			Input::resetMouseDeltas();
 			return;
 		}
 
@@ -414,6 +580,9 @@ namespace IGCS
 			{
 				return;
 			}
+			// the mouse moved the game camera while ours was off and those deltas piled up: applied now, they'd spin the
+			// camera to a random angle on its first frame.
+			Input::resetMouseDeltas();
 			g_cameraEnabled = 1;
 		}
 		displayCameraState();
@@ -479,6 +648,7 @@ namespace IGCS
 	{
 		if (!Globals::instance().keyboardMouseControlCamera())
 		{
+			Input::resetMouseDeltas();		// the mouse is playing the game: don't let it pile up for when it controls the camera again
 			return;
 		}
 		long mouseDeltaX = Input::getMouseDeltaX();
@@ -703,7 +873,15 @@ namespace IGCS
 	}
 
 
-	// shift + mouse wheel changes the game speed, camera on or off. The client hears about it and updates its slider.
+	// fixed steps on a grid (rounding first snaps an off-grid slider value), so scrolling always lands on round numbers like 1.0
+	static float stepOnGrid(float value, short notches, float step, float min, float max)
+	{
+		return std::clamp((roundf(value / step) + notches) * step, min, max);
+	}
+
+
+	// shift + mouse wheel changes the game speed, ctrl + mouse wheel the dolly seconds per node, camera on or off.
+	// The client hears about it and updates its slider.
 	void System::handleGameSpeedWheel()
 	{
 		const short wheel = Input::getMouseWheelDelta();
@@ -711,20 +889,24 @@ namespace IGCS
 		{
 			return;
 		}
-		if (Utils::shiftPressed())
+		Settings& settings = Globals::instance().settings();
+		const bool shift = Utils::shiftPressed();
+		const bool ctrl = !shift && Utils::ctrlPressed();
+		if (shift)
 		{
-			Settings& settings = Globals::instance().settings();
-			float speed = std::clamp(settings.gameSpeed * powf(GAME_SPEED_WHEEL_STEP, wheel), GAME_SPEED_WHEEL_MIN, GAME_SPEED_MAX);
-			if (fabsf(speed - 1.0f) < 0.03f)
-			{
-				speed = 1.0f;		// land exactly on normal speed when scrolling past it
-			}
-			settings.gameSpeed = speed;
-			NamedPipeManager::instance().writeTextPayload(Utils::formatString("%d=%.3f", static_cast<int>(SettingType::GameSpeed), speed), MessageType::SettingChanged);
+			// While paused this only changes the setting: unpausing resumes at it.
+			settings.gameSpeed = stepOnGrid(settings.gameSpeed, wheel, GAME_SPEED_WHEEL_STEP, GAME_SPEED_WHEEL_MIN, GAME_SPEED_MAX);
+			NamedPipeManager::instance().writeTextPayload(Utils::formatString("%d=%.3f", static_cast<int>(SettingType::GameSpeed), settings.gameSpeed), MessageType::SettingChanged);
 		}
-		if (Utils::shiftPressed() || !g_cameraEnabled)
+		if (ctrl)
 		{
-			// consumed: shift + wheel shouldn't also zoom, and with the camera off nothing else reads the wheel, so don't let it pile up.
+			settings.dollySegmentSeconds = stepOnGrid(settings.dollySegmentSeconds, wheel, DOLLY_SECONDS_WHEEL_STEP, DOLLY_SECONDS_WHEEL_STEP, DOLLY_SEGMENT_SECONDS_MAX);
+			NamedPipeManager::instance().writeTextPayload(Utils::formatString("%d=%.3f", static_cast<int>(SettingType::DollySegmentSeconds), settings.dollySegmentSeconds), MessageType::SettingChanged);
+			MessageHandler::addNotification(Utils::formatString("%.1f seconds per node", settings.dollySegmentSeconds));
+		}
+		if (shift || ctrl || !g_cameraEnabled)
+		{
+			// consumed: shift / ctrl + wheel shouldn't also zoom, and with the camera off nothing else reads the wheel, so don't let it pile up.
 			Input::resetMouseDeltas();
 		}
 	}

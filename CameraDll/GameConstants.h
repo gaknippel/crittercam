@@ -30,6 +30,7 @@ namespace IGCS::GameSpecific
 	#define DEFAULT_DOLLY_SEGMENT_SECONDS				3.0f
 	#define DOLLY_SEGMENT_SECONDS_MIN					0.1f
 	#define DOLLY_SEGMENT_SECONDS_MAX					60.0f
+	#define DOLLY_SECONDS_WHEEL_STEP					0.5f	// ctrl + one wheel notch adds/subtracts this (also the lowest it goes)
 	// End Mandatory constants
 
 	// The game stores the FoV in radians. The client's FoV speed setting is in 'degree-ish' units, this scales it down.
@@ -39,15 +40,22 @@ namespace IGCS::GameSpecific
 	#define GAME_SPEED_MIN								0.01f
 	#define GAME_SPEED_PAUSED							0.0001f	// not 0: the game's own camera divides by the frame time and flies off to a random spot at exactly 0
 	#define GAME_SPEED_MAX								4.0f
-	#define GAME_SPEED_WHEEL_STEP						1.15f	// shift + one wheel notch multiplies/divides the game speed by this
-	#define GAME_SPEED_WHEEL_MIN						0.05f	// same lower end as the client's slider
+	#define GAME_SPEED_WHEEL_STEP						0.1f	// shift + one wheel notch adds/subtracts this
+	#define GAME_SPEED_WHEEL_MIN						0.1f
 	#define GAME_SPEED_EASE_SECONDS						0.25f	// how fast the game eases to a new speed (0 = instant)
+	#define WORLD_SHIFT_MIN_METERS						20.0f	// the game camera jumping further than this in one update = the game re-centred its world coordinates (seen: 32m steps)
+	#define DEFAULT_TRACK_LAG_SECONDS					0.6f
+	#define TRACK_LAG_SECONDS_MIN						0.05f
+	#define TRACK_LAG_SECONDS_MAX						5.0f
+	#define TRACK_TARGET_HEIGHT							1.3f	// meters above the player's feet the tracking camera looks at (chest)
 	#define PITCH_LIMIT									1.55f	// radians (~89 degrees)
 
 	// AOB Keys for interceptor's AOB scanner
 	#define CAMERA_ADDRESS_INTERCEPT_KEY				"AOB_CAMERA_ADDRESS_INTERCEPT"
 	#define TIME_DILATION_LOCATION_KEY					"AOB_TIME_DILATION_LOCATION"
 	#define GRAPHICS_MAN_LOCATION_KEY					"AOB_GRAPHICS_MAN_LOCATION"
+	#define UI_COLOR_COPY_KEY							"AOB_UI_COLOR_COPY"
+	#define UI_COLOR_COPY_LENGTH						20			// bytes of the whole function, patched in place
 	#define HUD_OPTION_OFFSET							0x1189		// CSGraphicsImp -> byte, the game's HUD setting: 1 on, 0 off (found 2026-10-18)
 	#define WORLD_CHR_MAN_LOCATION_KEY					"AOB_WORLD_CHR_MAN_LOCATION"
 	#define PLAY_ANIMATION_KEY							"AOB_PLAY_ANIMATION"
@@ -60,6 +68,11 @@ namespace IGCS::GameSpecific
 	#define WORLD_CHR_MAN_CHARACTERS_BEGIN_OFFSET		0x17B98		// ChrIns** begin of all loaded characters (players, then enemies). Works in the hub and in runs
 	#define WORLD_CHR_MAN_CHARACTERS_END_OFFSET			0x17BA0		// ChrIns** end (one past the last)
 	#define MAX_CHARACTERS								256
+	#define WORLD_CHR_MAN_CHR_CAM_OFFSET				0x17610		// CS::ChrCam* (found 2026-10-27)
+	#define CHR_CAM_FOLLOW_CAM_OFFSET					0x60		// ChrCam -> CS::ChrExFollowCam, the normal third person camera
+	#define FOLLOW_CAM_YAW_OFFSET_1						0x154		// ChrExFollowCam -> yaw (radians, atan2(fwd x, fwd z)). Pitch is 4 bytes before each.
+	#define FOLLOW_CAM_YAW_OFFSET_2						0x170		//   the game rebuilds one from the others every frame: writing all three turns it
+	#define FOLLOW_CAM_YAW_OFFSET_3						0x184
 	#define CHR_MODULES_OFFSET							0x1B8		// ChrIns -> module bag
 	#define CHR_DATA_MODULE_OFFSET						0x0			// bag -> CSChrDataModule
 	#define CHR_PHYSICS_MODULE_OFFSET					0x68		// bag -> CSChrPhysicsModule

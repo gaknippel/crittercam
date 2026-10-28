@@ -79,7 +79,7 @@ function PathMap({ game }: { game: GameState }) {
       </svg>
       {hovered && hover !== null && (
         <div
-          className="pointer-events-none absolute border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md"
+          className="pointer-events-none absolute rounded-md border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-md"
           style={{ left: `${(sx(hovered[0]) / W) * 100}%`, top: `${(sy(hovered[2]) / H) * 100}%`, transform: "translate(12px, 12px)" }}
         >
           <div className="font-medium">node {hover + 1}</div>

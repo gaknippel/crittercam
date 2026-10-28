@@ -56,6 +56,7 @@ async fn install_update(app: tauri::AppHandle, pending: State<'_, update::Pendin
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_window_state::Builder::new().build()) // remembers the window size and position between launches
         .manage(Link::default())
         .manage(update::Pending::default())
         .setup(|app| {

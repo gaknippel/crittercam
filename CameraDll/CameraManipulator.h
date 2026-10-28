@@ -18,6 +18,8 @@ namespace IGCS::GameSpecific::CameraManipulator
 	bool takeOverGameCamera(Camera& camera);
 	// Lets the game write its own camera again.
 	void releaseGameCamera();
+	// horizontal look direction of a camera struct, in radians (atan2 of forward x / z)
+	float cameraYaw(LPBYTE camera);
 	// Switch to the next camera the routine writes to, in case the first pick isn't the one you see on screen.
 	void cycleCameraTarget();
 

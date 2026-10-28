@@ -127,6 +127,15 @@ namespace IGCS::GameSpecific::CameraManipulator
 	}
 
 
+	// forward - forward.y * up stays valid when looking straight up or down.
+	float cameraYaw(LPBYTE camera)
+	{
+		const float* up = reinterpret_cast<const float*>(camera + CAMERA_MATRIX_IN_STRUCT_OFFSET + 0x10);
+		const float* forward = reinterpret_cast<const float*>(camera + CAMERA_MATRIX_IN_STRUCT_OFFSET + 0x20);
+		return atan2f(forward[0] - forward[1] * up[0], forward[2] - forward[1] * up[2]);
+	}
+
+
 	void releaseGameCamera()
 	{
 		// Nothing to restore: the game copies its own camera again as soon as g_cameraEnabled is 0.

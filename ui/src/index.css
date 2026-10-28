@@ -1,13 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/jetbrains-mono";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-heading: var(--font-mono);
-    --font-mono: 'JetBrains Mono Variable', monospace;
+    --font-heading: 'Requiem 9', 'Requiem9', var(--font-sans);
+    --font-sans: 'NewsGothicNo.2W01-Roman', 'News Gothic No.2 W01 Roman', 'News Gothic No. 2 Std', sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -49,30 +48,30 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
+    --background: #d4d4d4;
+    --foreground: #141414;
+    --card: #e2e2e2;
+    --card-foreground: #141414;
+    --popover: #e2e2e2;
+    --popover-foreground: #141414;
+    --primary: #1d1d1d;
+    --primary-foreground: #e6e6e6;
+    --secondary: #2a2a2a;
+    --secondary-foreground: #e6e6e6;
+    --muted: #c6c6c6;
+    --muted-foreground: #555555;
+    --accent: #c6c6c6;
+    --accent-foreground: #141414;
     --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
+    --border: #8f8f8f;
+    --input: #8f8f8f;
+    --ring: #2f6fb0;
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
     --chart-4: oklch(0.371 0 0);
     --chart-5: oklch(0.269 0 0);
-    --radius: 0;
+    --radius: 0.5rem;
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
     --sidebar-primary: oklch(0.205 0 0);
@@ -81,40 +80,63 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    /* the y2k metal look: bars, bevels, black pills with blue text, dark raised panels */
+    --bar-from: #f6f6f6;
+    --bar-to: #bababa;
+    --bevel-hi: #ffffff;
+    --bevel-lo: #6e6e6e;
+    --pill-bg: #111111;
+    --pill-fg: #b9d7f5;
+    --pill-border: #8c8c8c;
+    --panel-bg: #2a2a2a;
+    --panel-fg: #e2e2e2;
+    --well: #f4f4f4;
+    --link: #1f5f9e;
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
+    --background: #383838;
+    --foreground: #e4e4e4;
+    --card: #2d2d2d;
+    --card-foreground: #e4e4e4;
+    --popover: #2d2d2d;
+    --popover-foreground: #e4e4e4;
+    --primary: #d8d8d8;
+    --primary-foreground: #1d1d1d;
+    --secondary: #1d1d1d;
+    --secondary-foreground: #dcdcdc;
+    --muted: #444444;
+    --muted-foreground: #a6a6a6;
+    --accent: #444444;
+    --accent-foreground: #e4e4e4;
     --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
+    --border: #161616;
+    --input: #161616;
+    --ring: #a9cdf0;
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
     --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
+    --chart-5: oklch(0.36 0 0);
+    --sidebar: oklch(0.24 0 0);
     --sidebar-foreground: oklch(0.985 0 0);
     --sidebar-primary: oklch(0.488 0.243 264.376);
     --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent: oklch(0.36 0 0);
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+    --bar-from: #646464;
+    --bar-to: #3a3a3a;
+    --bevel-hi: rgb(255 255 255 / 30%);
+    --bevel-lo: #0a0a0a;
+    --pill-bg: #000000;
+    --pill-fg: #a9cdf0;
+    --pill-border: #9d9d9d;
+    --panel-bg: #1d1d1d;
+    --panel-fg: #dcdcdc;
+    --well: #101010;
+    --link: #a9cdf0;
 }
 
 @layer base {
@@ -128,7 +150,7 @@
     cursor: pointer;
     }
   html {
-    @apply font-mono;
+    @apply font-sans;
     text-transform: lowercase; /* no capital letters anywhere, including messages from the dll */
     }
   body {
@@ -136,6 +158,47 @@
     overflow: hidden;
     }
 }
+@utility metal-bar {
+  background: linear-gradient(to bottom, var(--bar-from), var(--bar-to));
+  box-shadow: inset 0 1px 0 var(--bevel-hi), inset 0 -1px 0 var(--bevel-lo);
+}
+/* raised edge: light top / left, dark bottom / right */
+@utility bevel-out {
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--bevel-hi) var(--bevel-lo) var(--bevel-lo) var(--bevel-hi);
+}
+/* sunken edge, for wells like inputs and switch tracks */
+@utility bevel-in {
+  border-width: 1px;
+  border-style: solid;
+  border-color: var(--bevel-lo) var(--bevel-hi) var(--bevel-hi) var(--bevel-lo);
+}
+@utility pill {
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--pill-bg), white 10%), var(--pill-bg) 55%);
+  color: var(--pill-fg);
+  border: 1px solid var(--pill-border);
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px var(--bevel-lo);
+}
+@utility panel {
+  background: var(--panel-bg);
+  color: var(--panel-fg);
+  border-width: 1px;
+  border-style: solid;
+  border-color: #8a8a8a #2a2a2a #2a2a2a #8a8a8a;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--bevel-lo);
+}
+/* card headers are a metal bar, like the nav strip */
+[data-slot="card"] > [data-slot="card-header"].border-b,
+[data-slot="card"] > div.border-b:first-child {
+  background: linear-gradient(to bottom, var(--bar-from), var(--bar-to));
+  border-bottom-color: var(--bevel-lo);
+  box-shadow: inset 0 1px 0 var(--bevel-hi);
+  color: var(--foreground);
+}
+
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-button { display: none; }
 ::-webkit-scrollbar-track { background: transparent; }

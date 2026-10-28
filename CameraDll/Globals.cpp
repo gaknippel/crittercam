@@ -126,5 +126,6 @@ namespace IGCS
 		_keyBindingPerActionType[ActionType::DollyDeleteLastNode] = new ActionData("DollyDeleteLastNode", IGCS_KEY_DOLLY_DELETE_LAST_NODE, false, false, false);
 		_keyBindingPerActionType[ActionType::DollyClearPath] = new ActionData("DollyClearPath", IGCS_KEY_DOLLY_CLEAR_PATH, false, false, false);
 		_keyBindingPerActionType[ActionType::CycleCameraTarget] = new ActionData("CycleCameraTarget", IGCS_KEY_CYCLE_CAMERA_TARGET, false, false, false);
+		_keyBindingPerActionType[ActionType::TrackPlayer] = new ActionData("TrackPlayer", IGCS_KEY_TRACK_PLAYER, false, false, false);
 	}
 }

@@ -16,16 +16,16 @@ const fromPosition = (d: FloatSetting, p: number) => {
 };
 
 // The game speed bar inside the speed notification: glides to every change.
-function SpeedBar({ def, value, className }: { def: FloatSetting; value: number; className?: string }) {
+function SpeedBar({ def, value, paused, className }: { def: FloatSetting; value: number; paused?: boolean; className?: string }) {
   const at = (v: number) => `${toPosition(def, Math.min(def.max, Math.max(def.min, v))) * 100}%`;
   return (
-    <div className={cn("border p-3", className)}>
+    <div className={cn("panel p-3", className)}>
       <div className="mb-2 flex items-baseline justify-between">
-        <span className="text-xs text-muted-foreground">game speed</span>
+        <span className="text-xs text-muted-foreground">{paused ? "game speed (paused)" : "game speed"}</span>
         <span className="text-sm font-semibold tabular-nums">{value.toFixed(2)}×</span>
       </div>
-      <div className="relative h-1.5 bg-muted">
-        <div className="absolute inset-y-0 left-0 bg-primary transition-[width] duration-300 ease-out motion-reduce:transition-none" style={{ width: at(value) }} />
+      <div className="relative h-2 rounded-full bevel-in bg-(--well) overflow-hidden">
+        <div className="absolute inset-y-0 left-0 bg-(--pill-fg) transition-[width] duration-300 ease-out motion-reduce:transition-none" style={{ width: at(value) }} />
         <div className="absolute -inset-y-1 w-px bg-foreground/50" style={{ left: at(1) }} />
       </div>
       <div className="relative mt-1.5 h-3 text-[10px] text-muted-foreground">
@@ -38,7 +38,7 @@ function SpeedBar({ def, value, className }: { def: FloatSetting; value: number;
 }
 
 // Notification that pops up whenever the live game speed changes, and fades out 1.6s after it stops changing.
-export function SpeedNotification({ def, speed }: { def: FloatSetting; speed?: number }) {
+export function SpeedNotification({ def, speed, paused }: { def: FloatSetting; speed?: number; paused?: boolean }) {
   const [visible, setVisible] = useState(false);
   const [last, setLast] = useState(speed);
   if (speed !== last) {
@@ -52,9 +52,9 @@ export function SpeedNotification({ def, speed }: { def: FloatSetting; speed?: n
   }, [visible, speed]);
   return (
     <SpeedBar
-      def={def} value={speed ?? 1}
+      def={def} value={speed ?? 1} paused={paused}
       className={cn(
-        "pointer-events-none fixed bottom-5 left-1/2 w-72 -translate-x-1/2 bg-popover text-popover-foreground shadow-lg transition-all duration-300 ease-out motion-reduce:transition-none",
+        "pointer-events-none fixed bottom-5 left-1/2 w-72 -translate-x-1/2 shadow-lg transition-all duration-300 ease-out motion-reduce:transition-none",
         visible ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0",
       )}
     />
@@ -120,7 +120,7 @@ export function ChoiceRow({ label, hint, options, value, onChange }: { label: st
 }
 
 export function Kbd({ children }: { children: React.ReactNode }) {
-  return <kbd className="border bg-muted px-1.5 py-0.5 text-xs text-foreground">{children}</kbd>;
+  return <kbd className="pill rounded-[4px] px-1.5 py-0.5 text-xs">{children}</kbd>;
 }
 
 export function Keys({ binding }: { binding: Binding }) {

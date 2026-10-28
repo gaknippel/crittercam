@@ -44,6 +44,10 @@ namespace NightreignAOB
     // ---------------------------------------------------------------------------------
     // HUD (2026-10-18): the game's own HUD option, CS::CSGraphicsImp +0x1189 (1 on, 0 off). Found by diffing memory while toggling
     // Settings > HUD. Replaces the old HUD_OPACITY_READ hook (Otis's ER guess), which missed the item/skill icons.
+    //   That option fades over ~0.05-0.2s of GAME time, so while paused (speed 0.0001) it never finishes, and it doesn't hide
+    //   talk boxes / subtitles. (2026-10-27) Delete now does both: zero the UI color copy at RVA 0x12C5C60 (all Scaleform UI,
+    //   render time, works paused; patched in place, no hook) + the option (the weapon / item icons, which ignore the color copy).
+    //   Tried and ruled out for the icons: the sibling copy at 0x12C5C40, CSFeManImp fields, CSFeAutoHideCtrl (static table only).
     // Global RVA 0x3C1A680, 2 matches, both this global.
     constexpr const char* GRAPHICS_MAN = "48 8B 05 | ?? ?? ?? ?? 48 85 C0 74 17 48 8B 48 68 48 85 C9";
     // PAUSE: speed 0 makes the game's own camera fly off (it divides by the frame time). Pause uses 0.0001 instead.
@@ -70,6 +74,10 @@ namespace NightreignAOB
     // CURRENT CLIP: bag +0x18 CSChrTimeActModule: +0x34 int animation id (W_Event80070 plays 80070), +0x3C float time,
     //   +0x40 float length (wave 5.67s). Gesture clips loop (time wraps to 0); one-shot clips (prayer) stop at length;
     //   sitting gestures move on to id+1 (the seated loop). Used for play once (2026-10-18).
+    // GAME CAMERA YAW (2026-10-27): [WorldChrMan] +0x17610 CS::ChrCam, +0x60 CS::ChrExFollowCam (the third person camera; the
+    //   copy routine's source is a CSPersCam built from it). Yaw = atan2(fwd x, fwd z) at +0x154, +0x170 and +0x184 (pitch 4
+    //   bytes before each). Writing one gets rebuilt from the others; writing all three every frame turns the camera and it
+    //   stays. Used to make character movement relative to the free cam for keyboard and pads.
     // NO GRAVITY: CSChrPhysicsModule +0x1E7 byte (ER +0x1D3). Found by flipping bytes and checking the player stops falling.
     // +0x1EA also holds the player in the air (unknown what else it does).
 

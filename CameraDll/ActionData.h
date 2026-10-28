@@ -58,6 +58,7 @@ namespace IGCS
 		DollyDeleteLastNode,	// 23
 		DollyClearPath,			// 24
 		CycleCameraTarget,		// 25
+		TrackPlayer,			// 26
 
 		Amount,
 	};

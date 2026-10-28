@@ -32,6 +32,7 @@
 #include "input.h"
 #include "MessageHandler.h"
 #include "GameConstants.h"
+#include "CameraManipulator.h"
 #include <algorithm>
 #include <cmath>
 
@@ -83,16 +84,8 @@ namespace IGCS::InputHooker
 	}
 
 
-	// Horizontal look direction (yaw) of a camera struct. forward - forward.y * up stays valid when looking straight up or down.
-	static float cameraYaw(LPBYTE camera)
-	{
-		const float* up = reinterpret_cast<const float*>(camera + CAMERA_MATRIX_IN_STRUCT_OFFSET + 0x10);
-		const float* forward = reinterpret_cast<const float*>(camera + CAMERA_MATRIX_IN_STRUCT_OFFSET + 0x20);
-		return atan2f(forward[0] - forward[1] * up[0], forward[2] - forward[1] * up[2]);
-	}
-
-
 	// The game moves the character relative to ITS camera, but you're looking through ours: turn the move stick by the yaw difference.
+	// Mostly a fallback now: System turns the game's follow camera to our yaw (Studio::alignGameCameraYaw), which makes this ~0.
 	static void rotateMoveStickToFreeCam(XINPUT_GAMEPAD& pad)
 	{
 		LPBYTE gameCamera = g_gameSourceCamera;
@@ -100,7 +93,7 @@ namespace IGCS::InputHooker
 		{
 			return;
 		}
-		const float delta = cameraYaw(g_cameraOverrideBuffer) - cameraYaw(gameCamera);
+		const float delta = GameSpecific::CameraManipulator::cameraYaw(g_cameraOverrideBuffer) - GameSpecific::CameraManipulator::cameraYaw(gameCamera);
 		const float c = cosf(delta), s = sinf(delta);
 		const float x = pad.sThumbLX, y = pad.sThumbLY;
 		pad.sThumbLX = static_cast<SHORT>(std::clamp(x * c + y * s, -32768.0f, 32767.0f));

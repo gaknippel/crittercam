@@ -220,6 +220,46 @@ namespace IGCS::Studio
 	}
 
 
+	void alignGameCameraYaw(float yaw)
+	{
+		__try
+		{
+			const uintptr_t worldChrMan = nullptr == s_worldChrManPointer ? 0 : *reinterpret_cast<uintptr_t*>(s_worldChrManPointer);
+			const uintptr_t chrCam = 0 == worldChrMan ? 0 : *reinterpret_cast<uintptr_t*>(worldChrMan + WORLD_CHR_MAN_CHR_CAM_OFFSET);
+			const uintptr_t followCam = 0 == chrCam ? 0 : *reinterpret_cast<uintptr_t*>(chrCam + CHR_CAM_FOLLOW_CAM_OFFSET);
+			if (0 == followCam)
+			{
+				return;
+			}
+			*reinterpret_cast<float*>(followCam + FOLLOW_CAM_YAW_OFFSET_1) = yaw;
+			*reinterpret_cast<float*>(followCam + FOLLOW_CAM_YAW_OFFSET_2) = yaw;
+			*reinterpret_cast<float*>(followCam + FOLLOW_CAM_YAW_OFFSET_3) = yaw;
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+		}
+	}
+
+
+	bool localPlayerPosition(float* xyz)
+	{
+		__try
+		{
+			const uintptr_t physics = playerModule(CHR_PHYSICS_MODULE_OFFSET);
+			if (0 == physics)
+			{
+				return false;
+			}
+			memcpy(xyz, reinterpret_cast<void*>(physics + CHR_POSITION_OFFSET), 3 * sizeof(float));
+			return true;
+		}
+		__except (EXCEPTION_EXECUTE_HANDLER)
+		{
+			return false;
+		}
+	}
+
+
 	static bool writePhysicsByte(int offset, uint8_t value)
 	{
 		__try

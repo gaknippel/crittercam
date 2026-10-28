@@ -6,26 +6,7 @@ free cam, dolly paths, pause, game speed, hud toggle, live cam data, a gesture s
 
 
 > offline only!! run the game with eac disabled (`steam_appid.txt` in the `Game` folder, start `nightreign.exe` directly). never use this online.
-
-## how it works
-
 ```
-nightreign.exe                       crittercam.dll (injected)
-┌──────────────────────────┐         ┌──────────────────────────────┐
-│ camera select routine    │──hook──▶│ asm: swap source → our buffer │
-│  copies source camera    │         └──────────────┬───────────────┘
-│  into the render camera  │◀── our camera ─────────┘
-└──────────────────────────┘                 ▲
-                                             │ writes 2 buffers, flips (no tearing)
-crittercam app ──settings/keys/actions (pipe)──▶ system loop: free cam / dolly / studio
-```
-
-- **camera:** the game copies one of several source cameras into the render camera every frame. we hook that copy, and when the camera is on, point it at our own camera struct (matrix at `+0x10`, fov at `+0x50`).
-- **pause:** sets the game speed in the time dilation struct to almost 0 (exactly 0 makes the game's own camera fly off).
-- **dolly:** keyframes you place with the free cam. played back with a catmull-rom spline (position, fov) and quaternion squad (rotation), with ease-in/out.
-- **hud:** flips the game's own hud option, same as turning it off in the settings menu.
-- **studio:** calls the game's own play animation function on your character, and edits your character / enemies in memory (gravity, hp, team).
-- **boss fights:** sets the event flags the boss arena mod's menu would set.
 
 ## build
 
@@ -38,8 +19,6 @@ crittercam app ──settings/keys/actions (pipe)──▶ system loop: free cam
 ## updates
 
 
-the installed app checks this repo's private github releases on start and offers to update itself.
-
 ship a version: `.\ship.ps1 0.2.0 "what changed"` (game closed). it builds the dll and the installer, signs it, and creates release `v0.2.0` with the installer and `latest.json`. commit the version bump afterwards.
 
 
@@ -50,6 +29,8 @@ ship a version: `.\ship.ps1 0.2.0 "what changed"` (game closed). it builds the d
 1. start nightreign offline (eac disabled) and load in.
 2. run the crittercam app and click **inject camera**. keep it open, it's where settings and keys live.
 3. press **insert** to enable the camera.
+
+![the crittercam app: camera, in game, studio, fight, dolly and keys pages](docs/media/appTour.webp)
 
 | key | action |
 |---|---|
@@ -62,8 +43,9 @@ ship a version: `.\ship.ps1 0.2.0 "what changed"` (game closed). it builds the d
 | alt / ctrl (hold) | faster / slower |
 | pause | pause / unpause |
 | end | skip a few frames while paused |
-| shift + mouse wheel | game speed slower / faster (eased, the app shows it) |
-| delete | hide / show the whole hud, also hides the dolly path |
+| shift + mouse wheel | game speed -/+ 0.1 (eased, the app shows it) |
+| ctrl + mouse wheel | dolly seconds per node -/+ 0.5 |
+| delete | hide / show all ui (hud, talk boxes, subtitles, menus), also hides the dolly path |
 | backspace | block game input (on by default while the camera is on) |
 | scroll lock | lock camera movement |
 | **f5** | dolly: add node at the camera |
@@ -71,12 +53,15 @@ ship a version: `.\ship.ps1 0.2.0 "what changed"` (game closed). it builds the d
 | **f7** | dolly: delete last node |
 | **f8** | dolly: clear path |
 | **f9** | cycle camera target |
+| t | track me on / off |
 
 while the free cam is on, a controller moves your character relative to the free cam, not the game camera.
 
 while the free cam is on, the dolly path is drawn over the game: orange curve, numbered nodes, cyan line = where each node looks. needs **borderless windowed** (or windowed) display mode.
 
 ![dolly path and nodes drawn over the game](docs/media/campathDemo.webp)
+
+**tracking:** press t (or the switch on the camera page) and the free cam keeps you in frame with a cinematic lag, starting from the shot you have. turn on **follow me** and it also moves along, keeping its distance. the **lag** slider sets how lazy it is. with **track during dolly** on (the default), it also works during dolly playback: the path moves the camera, tracking aims it.
 
 **game speed:** hold shift and scroll in game (or use the slider on the camera page). the app pops up a speed meter while it changes.
 

@@ -66,6 +66,17 @@ namespace IGCS
 	}
 
 
+	void CameraPath::shift(const XMFLOAT3& offset)
+	{
+		for (Node& node : _nodes)
+		{
+			node.position.x += offset.x;
+			node.position.y += offset.y;
+			node.position.z += offset.z;
+		}
+	}
+
+
 	bool CameraPath::startPlayback()
 	{
 		if (_nodes.size() < 2)

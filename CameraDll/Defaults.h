@@ -66,6 +66,7 @@ namespace IGCS
 	#define IGCS_KEY_DOLLY_DELETE_LAST_NODE			VK_F7
 	#define IGCS_KEY_DOLLY_CLEAR_PATH				VK_F8
 	#define IGCS_KEY_CYCLE_CAMERA_TARGET			VK_F9
+	#define IGCS_KEY_TRACK_PLAYER					'T'
 
 	#define IGCS_BUTTON_FOV_DECREASE	Gamepad::button_t::UP
 	#define IGCS_BUTTON_FOV_INCREASE	Gamepad::button_t::DOWN
@@ -98,6 +99,10 @@ namespace IGCS
 		DollySegmentSeconds = 8,
 		DollyLoop = 9,
 		GameSpeed = 10,
+		TrackPlayer = 11,
+		TrackFollow = 12,
+		TrackLagSeconds = 13,
+		TrackDuringDolly = 14,
 		
 		// add more here
 	};

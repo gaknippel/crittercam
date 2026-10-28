@@ -68,7 +68,7 @@ export function useCrittercam() {
   const settingFromGame = useCallback((text: string) => {
     const [id, value] = text.split("=").map(Number);
     if (!SETTINGS[id] || !Number.isFinite(value)) return;
-    setSaved((s) => ({ ...s, settings: { ...s.settings, [id]: value } }));
+    setSaved((s) => ({ ...s, settings: { ...s.settings, [id]: SETTINGS[id].kind === "bool" ? value !== 0 : value } }));
   }, []);
 
   useEffect(() => {

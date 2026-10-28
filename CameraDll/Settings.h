@@ -27,6 +27,10 @@ namespace IGCS
 		float dollySegmentSeconds;		// seconds the dolly takes from one node to the next
 		bool dollyLoop;					// loop the dolly path (last node flows back into the first)
 		float gameSpeed;				// 1.0 = normal. The game eases toward it, see System::updateGameSpeed
+		bool trackPlayer;				// the free cam keeps the player in frame, with a lag (System::updateTracking)
+		bool trackFollow;				// ...and moves along, keeping its distance
+		float trackLagSeconds;			// how lazily it catches up
+		bool trackDuringDolly;			// during dolly playback the path moves the camera and tracking aims it
 
 		void setValueFromMessage(uint8_t payload[], DWORD payloadLength)
 		{
@@ -67,6 +71,18 @@ namespace IGCS
 			case SettingType::DollyLoop:
 				dollyLoop = payload[2] == (uint8_t)1 ? true : false;
 				break;
+			case SettingType::TrackPlayer:
+				trackPlayer = payload[2] == (uint8_t)1;
+				break;
+			case SettingType::TrackFollow:
+				trackFollow = payload[2] == (uint8_t)1;
+				break;
+			case SettingType::TrackDuringDolly:
+				trackDuringDolly = payload[2] == (uint8_t)1;
+				break;
+			case SettingType::TrackLagSeconds:
+				trackLagSeconds = std::clamp(Utils::floatFromBytes(payload, payloadLength, 2), TRACK_LAG_SECONDS_MIN, TRACK_LAG_SECONDS_MAX);
+				break;
 			case SettingType::GameSpeed:
 				gameSpeed = std::clamp(Utils::floatFromBytes(payload, payloadLength, 2), GAME_SPEED_MIN, GAME_SPEED_MAX);
 				break;
@@ -90,6 +106,10 @@ namespace IGCS
 			dollySegmentSeconds = DEFAULT_DOLLY_SEGMENT_SECONDS;
 			dollyLoop = false;
 			gameSpeed = 1.0f;
+			trackPlayer = false;
+			trackFollow = false;
+			trackLagSeconds = DEFAULT_TRACK_LAG_SECONDS;
+			trackDuringDolly = true;
 		}
 	};
 }
